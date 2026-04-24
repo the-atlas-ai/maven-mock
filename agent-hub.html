@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Inbox — Atlas</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --primary:       #6366f1;
+    --primary-light: #eef2ff;
+    --primary-dark:  #4f46e5;
+    --slate-50:  #f8fafc;
+    --slate-100: #f1f5f9;
+    --slate-200: #e2e8f0;
+    --slate-300: #cbd5e1;
+    --slate-400: #94a3b8;
+    --slate-500: #64748b;
+    --slate-600: #475569;
+    --slate-700: #334155;
+    --slate-800: #1e293b;
+    --slate-900: #0f172a;
+    --success-bg:  #f0fdf4; --success-text: #15803d;
+    --warning-bg:  #fffbeb; --warning-text: #b45309;
+    --danger-bg:   #fff1f2; --danger-text:  #be123c;
+    --neutral-bg:  #f1f5f9; --neutral-text: #475569;
+    --radius: 12px; --radius-sm: 8px;
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / .05);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / .07), 0 2px 4px -2px rgb(0 0 0 / .05);
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 14px;
+    background: var(--slate-50);
+    color: var(--slate-900);
+    min-height: 100vh;
+  }
+
+  /* ── Layout ── */
+  .shell { display: flex; min-height: 100vh; }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    width: 220px; flex-shrink: 0;
+    background: white; border-right: 1px solid var(--slate-200);
+    display: flex; flex-direction: column;
+  }
+  .sidebar-logo {
+    padding: 20px 20px 16px;
+    border-bottom: 1px solid var(--slate-100);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .sidebar-logo-mark {
+    width: 30px; height: 30px;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-weight: 700; font-size: 13px;
+  }
+  .sidebar-logo-name { font-weight: 700; font-size: 15px; color: var(--slate-900); }
+  .sidebar-nav { padding: 12px 10px; flex: 1; }
+  .nav-section-label {
+    font-size: 10px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: .07em; color: var(--slate-400); padding: 8px 10px 4px;
+  }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 10px; border-radius: var(--radius-sm);
+    color: var(--slate-600); font-size: 13px; font-weight: 500;
+    cursor: pointer; border: none; background: none; width: 100%;
+    text-align: left; text-decoration: none;
+    transition: background .15s, color .15s;
+  }
+  .nav-item:hover { background: var(--slate-100); color: var(--slate-900); }
+  .nav-item.active { background: var(--primary-light); color: var(--primary); }
+  .nav-icon { width: 16px; height: 16px; opacity: .7; flex-shrink: 0; }
+  .nav-item.active .nav-icon { opacity: 1; }
+  .nav-badge {
+    margin-left: auto; background: var(--danger-text); color: white;
+    font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 9999px;
+  }
+  .sidebar-footer {
+    padding: 14px 16px; border-top: 1px solid var(--slate-100);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .avatar {
+    width: 30px; height: 30px; border-radius: 50%;
+    background: linear-gradient(135deg, #818cf8, var(--primary));
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-size: 12px; font-weight: 600; flex-shrink: 0;
+  }
+  .avatar-sm { width: 24px; height: 24px; font-size: 10px; }
+  .sidebar-user-name { font-size: 13px; font-weight: 600; color: var(--slate-800); }
+  .sidebar-user-role { font-size: 11px; color: var(--slate-400); }
+
+  /* ── Main ── */
+  .main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  .topbar {
+    height: 56px; background: white; border-bottom: 1px solid var(--slate-200);
+    display: flex; align-items: center; padding: 0 28px; gap: 16px;
+    position: sticky; top: 0; z-index: 20;
+  }
+  .topbar-title { font-size: 16px; font-weight: 700; color: var(--slate-900); flex: 1; }
+  .topbar-sub { font-size: 12px; color: var(--slate-400); font-weight: 400; margin-left: 8px; }
+  .topbar-actions { display: flex; align-items: center; gap: 10px; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 7px 14px; border-radius: var(--radius-sm);
+    font-size: 13px; font-weight: 600; cursor: pointer; border: none;
+    transition: all .15s;
+  }
+  .btn-ghost { background: transparent; color: var(--slate-600); }
+  .btn-ghost:hover { background: var(--slate-100); }
+  .btn-primary { background: var(--primary); color: white; }
+  .btn-primary:hover { background: var(--primary-dark); }
+
+  .content { padding: 24px 28px; display: flex; flex-direction: column; gap: 24px; }
+
+  /* ── Stat strip ── */
+  .stat-strip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  .stat-card {
+    background: white; border: 1px solid var(--slate-200);
+    border-radius: var(--radius); padding: 18px 20px;
+    display: flex; flex-direction: column; gap: 6px;
+    box-shadow: var(--shadow-sm);
+  }
+  .stat-card.highlight {
+    background: var(--primary);
+    border-color: var(--primary-dark);
+  }
+  .stat-label {
+    font-size: 11px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: .06em; color: var(--slate-400);
+  }
+  .stat-card.highlight .stat-label { color: #c7d2fe; }
+  .stat-value { font-size: 28px; font-weight: 700; color: var(--slate-900); line-height: 1; }
+  .stat-card.highlight .stat-value { color: white; }
+  .stat-sub { font-size: 12px; color: var(--slate-500); }
+  .stat-card.highlight .stat-sub { color: #c7d2fe; }
+  .stat-card.attention .stat-value { color: var(--warning-text); }
+
+  /* ── Live pulse indicator ── */
+  .live-dot {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 11px; font-weight: 600; color: var(--success-text);
+  }
+  .pulse {
+    width: 8px; height: 8px; border-radius: 50%; background: #22c55e;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgb(34 197 94 / .4); }
+    50% { opacity: .8; box-shadow: 0 0 0 5px rgb(34 197 94 / 0); }
+  }
+
+  /* ── Section headers ── */
+  .section-header-row {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 14px;
+  }
+  .section-title {
+    font-size: 14px; font-weight: 700; color: var(--slate-900); flex: 1;
+  }
+  .section-sub { font-size: 12px; color: var(--slate-400); }
+
+  /* ── Agent client cards ── */
+  .client-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .client-card {
+    background: white; border: 1px solid var(--slate-200);
+    border-radius: var(--radius); overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow .15s;
+  }
+  .client-card:hover { box-shadow: var(--shadow-md); }
+  .client-card.has-attention { border-left: 3px solid var(--warning-text); }
+  .client-card.running { border-left: 3px solid var(--primary); }
+
+  .cc-header {
+    padding: 14px 16px 10px;
+    display: flex; align-items: flex-start; gap: 10px;
+    cursor: pointer;
+  }
+  .cc-client-name:hover { text-decoration: underline; }
+  .cc-avatar {
+    width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700; color: white;
+  }
+  .cc-client-name { font-size: 13px; font-weight: 700; color: var(--slate-900); }
+  .cc-project { font-size: 11px; color: var(--slate-400); margin-top: 1px; }
+  .cc-status { margin-left: auto; flex-shrink: 0; }
+
+  /* Pipeline row */
+  .cc-pipeline {
+    padding: 6px 16px 12px;
+    display: flex; align-items: center; gap: 0;
+  }
+  .pip-node { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+  .pip-dot {
+    width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0;
+  }
+  .pip-dot-done    { background: #22c55e; }
+  .pip-dot-active  { background: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); animation: pulse-blue 1.5s infinite; }
+  .pip-dot-pending { background: var(--slate-300); }
+  .pip-dot-skipped { background: var(--slate-200); }
+  @keyframes pulse-blue {
+    0%, 100% { box-shadow: 0 0 0 0 rgb(99 102 241 / .4); }
+    50% { box-shadow: 0 0 0 4px rgb(99 102 241 / 0); }
+  }
+  .pip-connector { width: 16px; height: 2px; background: var(--slate-200); margin-bottom: 12px; flex-shrink: 0; }
+  .pip-connector-done { background: #22c55e; }
+  .pip-label { font-size: 9px; color: var(--slate-400); white-space: nowrap; max-width: 48px; text-align: center; overflow: hidden; text-overflow: ellipsis; }
+
+  /* Stats row inside card */
+  .cc-stats {
+    border-top: 1px solid var(--slate-100);
+    display: grid; grid-template-columns: repeat(3, 1fr);
+  }
+  .cc-stat {
+    padding: 10px 0; text-align: center;
+    border-right: 1px solid var(--slate-100);
+  }
+  .cc-stat:last-child { border-right: none; }
+  .cc-stat-value { font-size: 16px; font-weight: 700; color: var(--slate-900); }
+  .cc-stat-value.attention { color: var(--warning-text); }
+  .cc-stat-value.danger { color: var(--danger-text); }
+  .cc-stat-label { font-size: 10px; color: var(--slate-400); margin-top: 2px; }
+
+  /* Footer action row */
+  .cc-footer {
+    border-top: 1px solid var(--slate-100);
+    padding: 8px 16px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .cc-time { font-size: 11px; color: var(--slate-400); }
+  .cc-action {
+    font-size: 11px; font-weight: 600; color: var(--primary); cursor: pointer;
+    background: none; border: none; padding: 0;
+  }
+  .cc-action:hover { text-decoration: underline; }
+
+  /* ── Badges ── */
+  .badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 8px; border-radius: 20px;
+    font-size: 11px; font-weight: 600;
+  }
+  .badge-dot { width: 6px; height: 6px; border-radius: 50%; }
+  .badge-running { background: var(--primary-light); color: var(--primary); }
+  .badge-running .badge-dot { background: var(--primary); animation: pulse 1.5s infinite; }
+  .badge-done { background: var(--success-bg); color: var(--success-text); }
+  .badge-done .badge-dot { background: var(--success-text); }
+  .badge-attention { background: var(--warning-bg); color: var(--warning-text); }
+  .badge-attention .badge-dot { background: var(--warning-text); }
+  .badge-danger { background: var(--danger-bg); color: var(--danger-text); }
+
+  /* ── Attention list ── */
+  .attention-list { display: flex; flex-direction: column; gap: 8px; }
+  .attention-item {
+    background: white; border: 1px solid var(--slate-200);
+    border-radius: var(--radius-sm);
+    padding: 14px 16px;
+    display: flex; align-items: flex-start; gap: 14px;
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow .15s;
+  }
+  .attention-item:hover { box-shadow: var(--shadow-md); }
+  .attention-item.urgent { border-left: 3px solid var(--danger-text); }
+  .attention-item.review { border-left: 3px solid var(--warning-text); }
+  .attention-item.info  { border-left: 3px solid var(--primary); }
+
+  .ai-icon {
+    width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .ai-icon-warning { background: var(--warning-bg); }
+  .ai-icon-danger  { background: var(--danger-bg); }
+  .ai-icon-primary { background: var(--primary-light); }
+
+  .attention-body { flex: 1; min-width: 0; }
+  .attention-title { font-size: 13px; font-weight: 600; color: var(--slate-900); }
+  .attention-meta { font-size: 11px; color: var(--slate-400); margin-top: 3px; }
+  .attention-meta strong { color: var(--slate-600); }
+  .attention-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+  .btn-sm {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 5px 12px; border-radius: var(--radius-sm);
+    font-size: 12px; font-weight: 600; cursor: pointer; border: none;
+    transition: all .15s;
+  }
+  .btn-sm-primary { background: var(--primary); color: white; }
+  .btn-sm-primary:hover { background: var(--primary-dark); }
+  .btn-sm-ghost { background: var(--slate-100); color: var(--slate-600); }
+  .btn-sm-ghost:hover { background: var(--slate-200); }
+
+  /* ── Empty card placeholder ── */
+  .card-placeholder {
+    background: white; border: 1px dashed var(--slate-200);
+    border-radius: var(--radius); padding: 28px 20px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 6px; color: var(--slate-300); font-size: 12px; text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+  <!-- ── Sidebar ── -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-mark">A</div>
+      <span class="sidebar-logo-name">Atlas</span>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Workspace</div>
+      <a class="nav-item" href="dashboard.html">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+        Dashboard
+      </a>
+      <a class="nav-item active" href="agent-hub.html">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+        Inbox
+        <span class="nav-badge">5</span>
+      </a>
+      <a class="nav-item" href="dashboard.html">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+        Projects
+      </a>
+      <a class="nav-item" href="clients-list.html">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        Clients
+      </a>
+      <a class="nav-item" href="workflow-live.html">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+        Workflows
+      </a>
+      <div class="nav-section-label" style="margin-top:8px">Reports</div>
+      <a class="nav-item" href="dashboard.html">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+        Analytics
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="avatar">SM</div>
+      <div>
+        <div class="sidebar-user-name">Sarah M.</div>
+        <div class="sidebar-user-role">Senior Manager</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ── Main ── -->
+  <div class="main">
+
+    <header class="topbar">
+      <div style="flex:1;">
+        <span class="topbar-title">Inbox</span>
+        <span class="topbar-sub">What's been prepared and ready for your review</span>
+      </div>
+      <div class="topbar-actions">
+        <div class="live-dot"><div class="pulse"></div> 2 agents running</div>
+      </div>
+    </header>
+
+    <div class="content">
+
+      <!-- ── Scale strip ── -->
+      <div class="stat-strip">
+        <div class="stat-card highlight">
+          <div class="stat-label">Transactions prepared</div>
+          <div class="stat-value">847</div>
+          <div class="stat-sub">ready for your review · today</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Clients covered</div>
+          <div class="stat-value">12</div>
+          <div class="stat-sub">agents active across all</div>
+        </div>
+        <div class="stat-card attention">
+          <div class="stat-label">Needs your attention</div>
+          <div class="stat-value">5</div>
+          <div class="stat-sub">low confidence · flagged items</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Workflows completed</div>
+          <div class="stat-value">9</div>
+          <div class="stat-sub">since yesterday 6 PM</div>
+        </div>
+      </div>
+
+      <!-- ── Agents at work ── -->
+      <div>
+        <div class="section-header-row">
+          <span class="section-title">Agents at work</span>
+          <span class="section-sub">Per client · most recent activity first</span>
+        </div>
+
+        <div class="client-cards">
+
+          <!-- Running card -->
+          <div class="client-card running">
+            <div class="cc-header">
+              <div class="cc-avatar" style="background:linear-gradient(135deg,#6366f1,#4f46e5)">AC</div>
+              <div>
+                <div class="cc-client-name">Acme Corp</div>
+                <div class="cc-project">Tax Prep 2025 · FY 2025</div>
+              </div>
+              <div class="cc-status">
+                <span class="badge badge-running"><span class="badge-dot"></span>Running</span>
+              </div>
+            </div>
+            <div class="cc-pipeline">
+              <div class="pip-node">
+                <div class="pip-dot pip-dot-done"></div>
+                <div class="pip-label">Parse PDF</div>
+              </div>
+              <div class="pip-connector pip-connector-done"></div>
+              <div class="pip-node">
+                <div class="pip-dot pip-dot-done"></div>
+                <div class="pip-label">Infer Intent</div>
+              </div>
+              <div class="pip-connector pip-connector-done"></div>
+              <div class="pip-node">
+                <div class="pip-dot pip-dot-done"></div>
+                <div class="pip-label">Static Rules</div>
+              </div>
+              <div class="pip-connector pip-connector-done"></div>
+              <div class="pip-node">
+                <div class="pip-dot pip-dot-active"></div>
+                <div class="pip-label">Dynamic Rules</div>
+              </div>
+              <div class="pip-connector"></div>
+              <div class="pip-node">
+                <div class="pip-dot pip-dot-pending"></div>
+                <div class="pip-label">LLM Review</div>
+              </div>
+            </div>
+            <div class="cc-stats">
+              <div class="cc-stat">
+                <div class="cc-stat-value">160</div>
+                <div class="cc-stat-label">transactions</div>
+              </div>
+              <div class="cc-stat">
+                <div class="cc-stat-value">112</div>
+                <div class="cc-stat-label">prepared</div>
+              </div>
+              <div class="cc-stat">
+                <div class="cc-stat-value attention">48</div>
+                <div class="cc-stat-label">in progress</div>
+              </div>
+            </div>
+            <div class="cc-footer">
+              <span class="cc-time">Started 4 min ago</span>
+              <a class="cc-action" href="workflow-live.html" style="text-decoration:none;">Watch live →</a>
+            </div>
+          </div>
+
+          <!-- Running card 2 -->
+          <div class="client-card running">
+            <div class="cc-header">
+              <div class="cc-avatar" style="background:linear-gradient(135deg,#f59e0b,#d97706)">NT</div>
+              <div>
+                <div class="cc-client-name">NovaTech Inc</div>
+                <div class="cc-project">Tax Prep 2025 · FY 2025</div>
+              </div>
+              <div class="cc-status">
+                <span class="badge badge-running"><span class="badge-dot"></span>Running</span>
+              </div>
+            </div>
+            <div class="cc-pipeline">
+              <div class="pip-node">
+                <div class="pip-dot pip-dot-done"></div>
+                <div class="pip-label">Parse PDF</div>
+              </div>
+              <div class="pip-connector pip-connector-done"></div>
+              <div class="pip-node">
+                <div class="pip-dot pip-dot-active"></div>
+                <div class="pip-label">Infer Intent</div>
+              </div>
+              <div class="pip-connector"></div>
+              <div class="pip-node">
+                <div class="pip-dot pip-dot-pending"></div>
+                <div class="pip-label">Static Rules</div>
+              </div>
+              <div class="pip-connector"></div>
+              <div class="pip-node">
+                <div class="pip-dot pip-dot-pending"></div>
+                <div class="pip-label">Dynamic Rules</div>
+              </div>
+              <div class="pip-connector"></div>
+              <div class="pip-node">
+                <div class="pip-dot pip-dot-pending"></div>
+                <div class="pip-label">LLM Review</div>
+              </div>
+            </div>
+            <div class="cc-stats">
+              <div class="cc-stat">
+                <div class="cc-stat-value">94</div>
+                <div class="cc-stat-label">transactions</div>
+              </div>
+              <div class="cc-stat">
+                <div class="cc-stat-value">0</div>
+                <div class="cc-stat-label">prepared</div>
+              </div>
+              <div class="cc-stat">
+                <div class="cc-stat-value attention">94</div>
+                <div class="cc-stat-label">in progress</div>
+              </div>
+            </div>
+            <div class="cc-footer">
+              <span class="cc-time">Started 1 min ago</span>
+              <a class="cc-action" href="workflow-live.html" style="text-decoration:none;">Watch live →</a>
+            </div>
+          </div>
+
+          <!-- Done, needs attention -->
+          <div class="client-card has-attention">
+            <div class="cc-header">
+              <div class="cc-avatar" style="background:linear-gradient(135deg,#34d399,#059669)">BW</div>
+              <div>
+                <div class="cc-client-name">Bridgewater LLC</div>
+                <div class="cc-project">Book Close Q1 2026</div>
+              </div>
+              <div class="cc-status">
+                <span class="badge badge-attention"><span class="badge-dot"></span>Review needed</span>
+              </div>
+            </div>
+            <div class="cc-pipeline">
+              <div class="pip-node">
+                <div class="pip-dot pip-dot-done"></div>
+                <div class="pip-label">Parse PDF</div>
+              </div>
+              <div class="pip-connector pip-connector-done"></div>
+              <div class="pip-node">
+                <div class="pip-dot pip-dot-done"></div>
+                <div class="pip-label">Infer Intent</div>
+              </div>
+              <div class="pip-connector pip-connector-done"></div>
+              <div class="pip-node">
+                <div class="pip-dot pip-dot-done"></div>
+                <div class="pip-label">Static Rules</div>
+              </div>
+              <div class="pip-connector pip-connector-done"></div>
+              <div class="pip-node">
+                <div class="pip-dot pip-dot-done"></div>
+                <div class="pip-label">Dynamic Rules</div>
+              </div>
+              <div class="pip-connector pip-connector-done"></div>
+              <div class="pip-node">
+                <div class="pip-dot pip-dot-done"></div>
+                <div class="pip-label">LLM Review</div>
+              </div>
+            </div>
+            <div class="cc-stats">
+              <div class="cc-stat">
+                <div class="cc-stat-value">218</div>
+                <div class="cc-stat-label">transactions</div>
+              </div>
+              <div class="cc-stat">
+                <div class="cc-stat-value">201</div>
+                <div class="cc-stat-label">prepared</div>
+              </div>
+              <div class="cc-stat">
+                <div class="cc-stat-value attention">17</div>
+                <div class="cc-stat-label">flagged</div>
+              </div>
+            </div>
+            <div class="cc-footer">
+              <span class="cc-time">Completed 22 min ago</span>
+              <a class="cc-action" href="transaction-review.html" style="text-decoration:none;">Review flagged →</a>
+            </div>
+          </div>
+
+          <!-- Done, clean -->
+          <div class="client-card">
+            <div class="cc-header">
+              <div class="cc-avatar" style="background:linear-gradient(135deg,#a78bfa,#7c3aed)">GP</div>
+              <div>
+                <div class="cc-client-name">Greenfield Partners</div>
+                <div class="cc-project">Audit Prep 2025</div>
+              </div>
+              <div class="cc-status">
+                <span class="badge badge-done"><span class="badge-dot"></span>Ready</span>
+              </div>
+            </div>
+            <div class="cc-pipeline">
+              <div class="pip-node">
+                <div class="pip-dot pip-dot-done"></div>
+                <div class="pip-label">Parse PDF</div>
+              </div>
+              <div class="pip-connector pip-connector-done"></div>
+              <div class="pip-node">
+                <div class="pip-dot pip-dot-done"></div>
+                <div class="pip-label">Infer Intent</div>
+              </div>
+              <div class="pip-connector pip-connector-done"></div>
+              <div class="pip-node">
+                <div class="pip-dot pip-dot-done"></div>
+                <div class="pip-label">Static Rules</div>
+              </div>
+              <div class="pip-connector pip-connector-done"></div>
+              <div class="pip-node">
+                <div class="pip-dot pip-dot-done"></div>
+                <div class="pip-label">Dynamic Rules</div>
+              </div>
+              <div class="pip-connector pip-connector-done"></div>
+              <div class="pip-node">
+                <div class="pip-dot pip-dot-done"></div>
+                <div class="pip-label">LLM Review</div>
+              </div>
+            </div>
+            <div class="cc-stats">
+              <div class="cc-stat">
+                <div class="cc-stat-value">183</div>
+                <div class="cc-stat-label">transactions</div>
+              </div>
+              <div class="cc-stat">
+                <div class="cc-stat-value">183</div>
+                <div class="cc-stat-label">prepared</div>
+              </div>
+              <div class="cc-stat">
+                <div class="cc-stat-value" style="color:var(--success-text)">0</div>
+                <div class="cc-stat-label">flagged</div>
+              </div>
+            </div>
+            <div class="cc-footer">
+              <span class="cc-time">Completed 1h 12m ago</span>
+              <button class="cc-action">Open transactions →</button>
+            </div>
+          </div>
+
+          <!-- Done, clean -->
+          <div class="client-card">
+            <div class="cc-header">
+              <div class="cc-avatar" style="background:linear-gradient(135deg,#f87171,#dc2626)">SD</div>
+              <div>
+                <div class="cc-client-name">Stellar Dynamics</div>
+                <div class="cc-project">Book Close Q4 2025</div>
+              </div>
+              <div class="cc-status">
+                <span class="badge badge-done"><span class="badge-dot"></span>Ready</span>
+              </div>
+            </div>
+            <div class="cc-pipeline">
+              <div class="pip-node">
+                <div class="pip-dot pip-dot-done"></div>
+                <div class="pip-label">Parse PDF</div>
+              </div>
+              <div class="pip-connector pip-connector-done"></div>
+              <div class="pip-node">
+                <div class="pip-dot pip-dot-done"></div>
+                <div class="pip-label">Infer Intent</div>
+              </div>
+              <div class="pip-connector pip-connector-done"></div>
+              <div class="pip-node">
+                <div class="pip-dot pip-dot-done"></div>
+                <div class="pip-label">Static Rules</div>
+              </div>
+              <div class="pip-connector pip-connector-done"></div>
+              <div class="pip-node">
+                <div class="pip-dot pip-dot-done"></div>
+                <div class="pip-label">Dynamic Rules</div>
+              </div>
+              <div class="pip-connector pip-connector-done"></div>
+              <div class="pip-node">
+                <div class="pip-dot pip-dot-done"></div>
+                <div class="pip-label">LLM Review</div>
+              </div>
+            </div>
+            <div class="cc-stats">
+              <div class="cc-stat">
+                <div class="cc-stat-value">142</div>
+                <div class="cc-stat-label">transactions</div>
+              </div>
+              <div class="cc-stat">
+                <div class="cc-stat-value">139</div>
+                <div class="cc-stat-label">prepared</div>
+              </div>
+              <div class="cc-stat">
+                <div class="cc-stat-value attention">3</div>
+                <div class="cc-stat-label">flagged</div>
+              </div>
+            </div>
+            <div class="cc-footer">
+              <span class="cc-time">Completed 2h 4m ago</span>
+              <button class="cc-action">Open transactions →</button>
+            </div>
+          </div>
+
+          <!-- Placeholder for more -->
+          <div class="card-placeholder">
+            <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            7 more clients · no agent activity today
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ── Your attention needed ── -->
+      <div>
+        <div class="section-header-row">
+          <span class="section-title">Your attention needed</span>
+          <span class="section-sub">Agent prepared — you decide</span>
+        </div>
+
+        <div class="attention-list">
+
+          <div class="attention-item urgent">
+            <div class="ai-icon ai-icon-danger">
+              <svg width="16" height="16" fill="none" stroke="#be123c" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+            </div>
+            <div class="attention-body">
+              <div class="attention-title">17 transactions flagged with low confidence</div>
+              <div class="attention-meta">
+                <strong>Bridgewater LLC</strong> · Book Close Q1 2026 · Completed 22 min ago by LLM Review agent
+              </div>
+            </div>
+            <div class="attention-actions">
+              <a href="transaction-review.html" class="btn-sm btn-sm-primary" style="text-decoration:none">Review now</a>
+              <button class="btn-sm btn-sm-ghost">Later</button>
+            </div>
+          </div>
+
+          <div class="attention-item review">
+            <div class="ai-icon ai-icon-warning">
+              <svg width="16" height="16" fill="none" stroke="#b45309" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+            <div class="attention-body">
+              <div class="attention-title">4 transfers identified — awaiting your confirmation</div>
+              <div class="attention-meta">
+                <strong>Acme Corp</strong> · Tax Prep 2025 · Intent agent routed these as potential transfers
+              </div>
+            </div>
+            <div class="attention-actions">
+              <button class="btn-sm btn-sm-primary">Review transfers</button>
+              <button class="btn-sm btn-sm-ghost">Later</button>
+            </div>
+          </div>
+
+          <div class="attention-item review">
+            <div class="ai-icon ai-icon-warning">
+              <svg width="16" height="16" fill="none" stroke="#b45309" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
+            </div>
+            <div class="attention-body">
+              <div class="attention-title">3 transactions flagged — category unclear</div>
+              <div class="attention-meta">
+                <strong>Stellar Dynamics</strong> · Book Close Q4 2025 · Dynamic rules agent could not match
+              </div>
+            </div>
+            <div class="attention-actions">
+              <button class="btn-sm btn-sm-primary">Categorise</button>
+              <button class="btn-sm btn-sm-ghost">Later</button>
+            </div>
+          </div>
+
+          <div class="attention-item info">
+            <div class="ai-icon ai-icon-primary">
+              <svg width="16" height="16" fill="none" stroke="#6366f1" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+            <div class="attention-body">
+              <div class="attention-title">183 transactions prepared and ready to review</div>
+              <div class="attention-meta">
+                <strong>Greenfield Partners</strong> · Audit Prep 2025 · All agents completed · no flags
+              </div>
+            </div>
+            <div class="attention-actions">
+              <button class="btn-sm btn-sm-primary">Open</button>
+            </div>
+          </div>
+
+          <div class="attention-item info">
+            <div class="ai-icon ai-icon-primary">
+              <svg width="16" height="16" fill="none" stroke="#6366f1" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01"/></svg>
+            </div>
+            <div class="attention-body">
+              <div class="attention-title">New rules can be learnt from 31 manual overrides</div>
+              <div class="attention-meta">
+                <strong>Across 4 clients</strong> · Static rules agent detected patterns in your recent corrections
+              </div>
+            </div>
+            <div class="attention-actions">
+              <button class="btn-sm btn-sm-primary">Review rules</button>
+              <button class="btn-sm btn-sm-ghost">Dismiss</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+
+</div><!-- /shell -->
+
+<script>
+  // Client card headers → project-detail.html
+  document.addEventListener('click', function(e) {
+    const header = e.target.closest('.cc-header');
+    if (header && !e.target.closest('.cc-action')) {
+      window.location.href = 'project-detail.html';
+    }
+    const name = e.target.closest('.cc-client-name, .cc-project');
+    if (name) window.location.href = 'project-detail.html';
+  });
+</script>
+
+</body>
+</html>

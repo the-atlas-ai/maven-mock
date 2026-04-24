@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Atlas — Clients</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --primary: #6366f1; --primary-dark: #4f46e5; --primary-light: #eef2ff;
+  --slate-50:  #f8fafc; --slate-100: #f1f5f9; --slate-200: #e2e8f0;
+  --slate-300: #cbd5e1; --slate-400: #94a3b8; --slate-500: #64748b;
+  --slate-600: #475569; --slate-700: #334155; --slate-800: #1e293b; --slate-900: #0f172a;
+  --green-50: #f0fdf4; --green-600: #16a34a; --green-700: #15803d;
+  --amber-50: #fffbeb; --amber-100: #fef3c7; --amber-600: #d97706; --amber-700: #b45309;
+  --radius: 12px; --radius-sm: 8px;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 13px; background: var(--slate-50); color: var(--slate-900);
+  display: flex; height: 100vh; overflow: hidden;
+}
+
+/* ── Sidebar (standard) ── */
+.sidebar { width: 220px; flex-shrink: 0; background: white; border-right: 1px solid var(--slate-200); display: flex; flex-direction: column; height: 100vh; }
+.sidebar-logo { padding: 20px 20px 16px; border-bottom: 1px solid var(--slate-100); display: flex; align-items: center; gap: 10px; }
+.sidebar-logo-mark { width: 30px; height: 30px; background: linear-gradient(135deg, #6366f1, #4f46e5); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 13px; }
+.sidebar-logo-name { font-weight: 700; font-size: 15px; color: #0f172a; }
+.sidebar-nav { padding: 12px 10px; flex: 1; overflow-y: auto; }
+.nav-section-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .07em; color: #94a3b8; padding: 8px 10px 4px; }
+.nav-item { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 7px; color: #475569; font-size: 13px; font-weight: 500; cursor: pointer; border: none; background: none; width: 100%; text-align: left; transition: background .15s, color .15s; text-decoration: none; }
+.nav-item:hover { background: #f1f5f9; color: #0f172a; }
+.nav-item.active { background: #eef2ff; color: #4f46e5; }
+.nav-icon { width: 16px; height: 16px; opacity: .7; flex-shrink: 0; }
+.nav-item.active .nav-icon { opacity: 1; }
+.nav-badge { margin-left: auto; background: #be123c; color: white; font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 9999px; }
+.sidebar-footer { padding: 14px 16px; border-top: 1px solid #f1f5f9; display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.sidebar-avatar { width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(135deg, #818cf8, #4f46e5); display: flex; align-items: center; justify-content: center; color: white; font-size: 12px; font-weight: 600; flex-shrink: 0; }
+.sidebar-user-name { font-size: 13px; font-weight: 600; color: #1e293b; }
+.sidebar-user-role { font-size: 11px; color: #94a3b8; }
+
+/* ── Main ── */
+.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
+
+/* ── Topbar ── */
+.topbar {
+  height: 56px; background: white; border-bottom: 1px solid var(--slate-200);
+  display: flex; align-items: center; padding: 0 24px; gap: 12px; flex-shrink: 0;
+}
+.topbar-title { font-size: 16px; font-weight: 700; color: var(--slate-900); }
+.tb-spacer { flex: 1; }
+.search-wrap { position: relative; }
+.search-wrap svg { position: absolute; left: 9px; top: 50%; transform: translateY(-50%); color: var(--slate-400); pointer-events: none; }
+.search-input {
+  padding: 6px 10px 6px 30px; font-size: 12px;
+  border: 1px solid var(--slate-200); border-radius: 7px;
+  background: var(--slate-50); color: var(--slate-900); outline: none;
+  width: 200px; font-family: inherit; transition: border-color .12s;
+}
+.search-input:focus { border-color: var(--primary); background: white; }
+.btn-add {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 12px; font-weight: 600; padding: 7px 14px;
+  background: var(--primary-dark); color: white;
+  border: none; border-radius: 7px; cursor: pointer;
+  text-decoration: none; transition: background .12s;
+}
+.btn-add:hover { background: #4338ca; }
+
+/* ── Summary strip ── */
+.summary-strip {
+  display: flex; gap: 0; border-bottom: 1px solid var(--slate-200);
+  background: white; flex-shrink: 0;
+}
+.strip-stat {
+  padding: 10px 20px; border-right: 1px solid var(--slate-100);
+  display: flex; flex-direction: column; gap: 1px;
+}
+.strip-val { font-size: 18px; font-weight: 700; color: var(--slate-900); }
+.strip-key { font-size: 10px; color: var(--slate-400); text-transform: uppercase; letter-spacing: .05em; }
+.strip-val.green  { color: var(--green-600); }
+.strip-val.amber  { color: var(--amber-600); }
+.strip-val.slate  { color: var(--slate-400); }
+
+/* ── Table ── */
+.table-wrap { flex: 1; overflow-y: auto; }
+table {
+  width: 100%; border-collapse: collapse; font-size: 13px;
+}
+thead th {
+  padding: 10px 16px; text-align: left; font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .06em; color: var(--slate-400);
+  background: var(--slate-50); border-bottom: 1px solid var(--slate-200);
+  white-space: nowrap; position: sticky; top: 0; z-index: 1;
+}
+tbody tr {
+  border-bottom: 1px solid var(--slate-100);
+  transition: background .1s; cursor: pointer;
+}
+tbody tr:hover { background: var(--slate-50); }
+td { padding: 12px 16px; vertical-align: middle; }
+
+/* client name cell */
+.client-name { font-weight: 600; color: var(--slate-900); }
+.client-entity { font-size: 11px; color: var(--slate-400); margin-top: 1px; }
+
+/* assignee cell */
+.assignee-cell { display: flex; align-items: center; gap: 7px; }
+.avatar-xs {
+  width: 24px; height: 24px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9px; font-weight: 700; color: white; flex-shrink: 0;
+}
+.av-sk { background: linear-gradient(135deg, #818cf8, #4f46e5); }
+.av-mt { background: linear-gradient(135deg, #34d399, #059669); }
+.av-jl { background: linear-gradient(135deg, #f59e0b, #d97706); }
+.assignee-name-sm { font-size: 12px; color: var(--slate-700); }
+
+/* workflow cell */
+.wf-name { font-size: 12px; color: var(--slate-700); }
+.wf-time { font-size: 11px; color: var(--slate-400); margin-top: 1px; }
+.wf-none { font-size: 11px; color: var(--slate-400); font-style: italic; }
+
+/* status pill */
+.status-pill {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 9999px;
+  white-space: nowrap;
+}
+.sp-active    { background: var(--green-50);  color: var(--green-700); }
+.sp-attention { background: var(--amber-100); color: var(--amber-700); }
+.sp-setup     { background: var(--slate-100); color: var(--slate-500); }
+.sp-dot { width: 5px; height: 5px; border-radius: 50%; }
+.sp-active .sp-dot    { background: var(--green-600); }
+.sp-attention .sp-dot { background: var(--amber-600); }
+.sp-setup .sp-dot     { background: var(--slate-400); }
+
+/* actions */
+.action-btn {
+  width: 28px; height: 28px; border-radius: 6px; border: none;
+  background: transparent; color: var(--slate-400); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .12s, color .12s;
+}
+.action-btn:hover { background: var(--slate-100); color: var(--slate-700); }
+
+/* industry tag */
+.industry-tag {
+  font-size: 11px; color: var(--slate-500);
+}
+</style>
+</head>
+<body>
+
+<!-- ── Sidebar ── -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="sidebar-logo-mark">A</div>
+    <span class="sidebar-logo-name">Atlas</span>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">Workspace</div>
+    <a class="nav-item" href="dashboard.html">
+      <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+      Dashboard
+    </a>
+    <a class="nav-item" href="agent-hub.html">
+      <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/></svg>
+      Inbox
+      <span class="nav-badge">5</span>
+    </a>
+    <a class="nav-item" href="dashboard.html">
+      <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+      Projects
+    </a>
+    <a class="nav-item active" href="clients-list.html">
+      <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+      Clients
+    </a>
+    <a class="nav-item" href="workflow-live.html">
+      <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+      Workflows
+    </a>
+    <div class="nav-section-label" style="margin-top:8px">Reports</div>
+    <a class="nav-item" href="dashboard.html">
+      <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+      Analytics
+    </a>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="sidebar-avatar">SM</div>
+    <div>
+      <div class="sidebar-user-name">Sarah M.</div>
+      <div class="sidebar-user-role">Senior Manager</div>
+    </div>
+  </div>
+</aside>
+
+<!-- ── Main ── -->
+<div class="main">
+
+  <!-- Topbar -->
+  <div class="topbar">
+    <span class="topbar-title">Clients</span>
+    <div class="tb-spacer"></div>
+    <div class="search-wrap">
+      <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+      <input class="search-input" type="text" placeholder="Search clients…" />
+    </div>
+    <a class="btn-add" href="client-onboarding.html">
+      <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+      Add client
+    </a>
+  </div>
+
+  <!-- Summary strip -->
+  <div class="summary-strip">
+    <div class="strip-stat">
+      <div class="strip-val">9</div>
+      <div class="strip-key">Total clients</div>
+    </div>
+    <div class="strip-stat">
+      <div class="strip-val green">7</div>
+      <div class="strip-key">Active</div>
+    </div>
+    <div class="strip-stat">
+      <div class="strip-val amber">2</div>
+      <div class="strip-key">Need attention</div>
+    </div>
+    <div class="strip-stat">
+      <div class="strip-val slate">1</div>
+      <div class="strip-key">In setup</div>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Client</th>
+          <th>Industry</th>
+          <th>Assigned to</th>
+          <th>Last workflow</th>
+          <th>Status</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+
+        <tr onclick="window.location.href='project-detail.html'">
+          <td>
+            <div class="client-name">Bright &amp; Bloom LLC</div>
+            <div class="client-entity">LLC</div>
+          </td>
+          <td><span class="industry-tag">Retail / E-commerce</span></td>
+          <td>
+            <div class="assignee-cell">
+              <div class="avatar-xs av-jl">JL</div>
+              <span class="assignee-name-sm">Jennifer L.</span>
+            </div>
+          </td>
+          <td>
+            <div class="wf-name">Quarterly Close — Q1 2025</div>
+            <div class="wf-time">2h ago · in progress</div>
+          </td>
+          <td><span class="status-pill sp-attention"><span class="sp-dot"></span>Needs attention</span></td>
+          <td><button class="action-btn" onclick="event.stopPropagation()"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/></svg></button></td>
+        </tr>
+
+        <tr onclick="window.location.href='project-detail.html'">
+          <td>
+            <div class="client-name">NovaTech Solutions Inc.</div>
+            <div class="client-entity">LLC</div>
+          </td>
+          <td><span class="industry-tag">Technology / SaaS</span></td>
+          <td>
+            <div class="assignee-cell">
+              <div class="avatar-xs av-sk">SK</div>
+              <span class="assignee-name-sm">Sarah K.</span>
+            </div>
+          </td>
+          <td>
+            <div class="wf-name">Tax Prep 2025</div>
+            <div class="wf-time">1d ago · completed</div>
+          </td>
+          <td><span class="status-pill sp-active"><span class="sp-dot"></span>Active</span></td>
+          <td><button class="action-btn" onclick="event.stopPropagation()"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/></svg></button></td>
+        </tr>
+
+        <tr onclick="window.location.href='project-detail.html'">
+          <td>
+            <div class="client-name">Harbor &amp; Cole LLP</div>
+            <div class="client-entity">Partnership</div>
+          </td>
+          <td><span class="industry-tag">Professional Services</span></td>
+          <td>
+            <div class="assignee-cell">
+              <div class="avatar-xs av-mt">MT</div>
+              <span class="assignee-name-sm">Marcus T.</span>
+            </div>
+          </td>
+          <td>
+            <div class="wf-name">Monthly Close — Mar 2025</div>
+            <div class="wf-time">3d ago · completed</div>
+          </td>
+          <td><span class="status-pill sp-active"><span class="sp-dot"></span>Active</span></td>
+          <td><button class="action-btn" onclick="event.stopPropagation()"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/></svg></button></td>
+        </tr>
+
+        <tr onclick="window.location.href='project-detail.html'">
+          <td>
+            <div class="client-name">Sunrise Bakery LLC</div>
+            <div class="client-entity">LLC</div>
+          </td>
+          <td><span class="industry-tag">Restaurant / Hospitality</span></td>
+          <td>
+            <div class="assignee-cell">
+              <div class="avatar-xs av-sk">SK</div>
+              <span class="assignee-name-sm">Sarah K.</span>
+            </div>
+          </td>
+          <td>
+            <div class="wf-name">Bank Rec — Mar 2025</div>
+            <div class="wf-time">5h ago · completed</div>
+          </td>
+          <td><span class="status-pill sp-active"><span class="sp-dot"></span>Active</span></td>
+          <td><button class="action-btn" onclick="event.stopPropagation()"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/></svg></button></td>
+        </tr>
+
+        <tr onclick="window.location.href='project-detail.html'">
+          <td>
+            <div class="client-name">Clearwater Clinic</div>
+            <div class="client-entity">S-Corporation</div>
+          </td>
+          <td><span class="industry-tag">Healthcare</span></td>
+          <td>
+            <div class="assignee-cell">
+              <div class="avatar-xs av-mt">MT</div>
+              <span class="assignee-name-sm">Marcus T.</span>
+            </div>
+          </td>
+          <td>
+            <div class="wf-name">Tax Prep 2025</div>
+            <div class="wf-time">2d ago · needs review</div>
+          </td>
+          <td><span class="status-pill sp-attention"><span class="sp-dot"></span>Needs attention</span></td>
+          <td><button class="action-btn" onclick="event.stopPropagation()"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/></svg></button></td>
+        </tr>
+
+        <tr onclick="window.location.href='project-detail.html'">
+          <td>
+            <div class="client-name">Meridian Properties</div>
+            <div class="client-entity">LLC</div>
+          </td>
+          <td><span class="industry-tag">Real Estate</span></td>
+          <td>
+            <div class="assignee-cell">
+              <div class="avatar-xs av-jl">JL</div>
+              <span class="assignee-name-sm">Jennifer L.</span>
+            </div>
+          </td>
+          <td>
+            <div class="wf-name">Quarterly Close — Q4 2024</div>
+            <div class="wf-time">1w ago · completed</div>
+          </td>
+          <td><span class="status-pill sp-active"><span class="sp-dot"></span>Active</span></td>
+          <td><button class="action-btn" onclick="event.stopPropagation()"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/></svg></button></td>
+        </tr>
+
+        <tr onclick="window.location.href='project-detail.html'">
+          <td>
+            <div class="client-name">Peak Athletics Co.</div>
+            <div class="client-entity">C-Corporation</div>
+          </td>
+          <td><span class="industry-tag">Retail / E-commerce</span></td>
+          <td>
+            <div class="assignee-cell">
+              <div class="avatar-xs av-jl">JL</div>
+              <span class="assignee-name-sm">Jennifer L.</span>
+            </div>
+          </td>
+          <td>
+            <div class="wf-name">Monthly Close — Mar 2025</div>
+            <div class="wf-time">6h ago · completed</div>
+          </td>
+          <td><span class="status-pill sp-active"><span class="sp-dot"></span>Active</span></td>
+          <td><button class="action-btn" onclick="event.stopPropagation()"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/></svg></button></td>
+        </tr>
+
+        <tr onclick="window.location.href='project-detail.html'">
+          <td>
+            <div class="client-name">Lakeview Consulting</div>
+            <div class="client-entity">LLC</div>
+          </td>
+          <td><span class="industry-tag">Professional Services</span></td>
+          <td>
+            <div class="assignee-cell">
+              <div class="avatar-xs av-mt">MT</div>
+              <span class="assignee-name-sm">Marcus T.</span>
+            </div>
+          </td>
+          <td>
+            <div class="wf-name">Tax Prep 2025</div>
+            <div class="wf-time">4d ago · completed</div>
+          </td>
+          <td><span class="status-pill sp-active"><span class="sp-dot"></span>Active</span></td>
+          <td><button class="action-btn" onclick="event.stopPropagation()"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/></svg></button></td>
+        </tr>
+
+        <tr onclick="window.location.href='client-onboarding.html'" style="opacity:.7">
+          <td>
+            <div class="client-name">Forge Digital Inc.</div>
+            <div class="client-entity">LLC</div>
+          </td>
+          <td><span class="industry-tag">Technology / SaaS</span></td>
+          <td>
+            <div class="assignee-cell">
+              <div class="avatar-xs av-sk">SK</div>
+              <span class="assignee-name-sm">Sarah K.</span>
+            </div>
+          </td>
+          <td>
+            <div class="wf-none">No workflows yet</div>
+          </td>
+          <td><span class="status-pill sp-setup"><span class="sp-dot"></span>In setup</span></td>
+          <td><button class="action-btn" onclick="event.stopPropagation(); window.location.href='client-onboarding.html'"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 9l3 3m0 0l-3 3m3-3H8m13 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></button></td>
+        </tr>
+
+      </tbody>
+    </table>
+  </div>
+
+</div><!-- .main -->
+
+</body>
+</html>

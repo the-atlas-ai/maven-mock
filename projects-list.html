@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Projects — Atlas</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --primary:       #6366f1;
+    --primary-light: #eef2ff;
+    --primary-dark:  #4f46e5;
+    --slate-50:  #f8fafc;
+    --slate-100: #f1f5f9;
+    --slate-200: #e2e8f0;
+    --slate-300: #cbd5e1;
+    --slate-400: #94a3b8;
+    --slate-500: #64748b;
+    --slate-600: #475569;
+    --slate-700: #334155;
+    --slate-800: #1e293b;
+    --slate-900: #0f172a;
+    --success-bg:  #f0fdf4; --success-text: #15803d; --success-ring: #bbf7d0;
+    --warning-bg:  #fffbeb; --warning-text: #b45309; --warning-ring: #fde68a;
+    --danger-bg:   #fff1f2; --danger-text:  #be123c; --danger-ring:  #fecdd3;
+    --neutral-bg:  #f1f5f9; --neutral-text: #475569; --neutral-ring: #e2e8f0;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / .05);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / .07), 0 2px 4px -2px rgb(0 0 0 / .05);
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 14px;
+    background: var(--slate-50);
+    color: var(--slate-900);
+    min-height: 100vh;
+  }
+
+  .shell { display: flex; min-height: 100vh; }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    width: 220px; flex-shrink: 0;
+    background: white;
+    border-right: 1px solid var(--slate-200);
+    display: flex; flex-direction: column;
+  }
+  .sidebar-logo {
+    padding: 20px 20px 16px;
+    border-bottom: 1px solid var(--slate-100);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .sidebar-logo-mark {
+    width: 30px; height: 30px;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-weight: 700; font-size: 13px;
+  }
+  .sidebar-logo-name { font-weight: 700; font-size: 15px; color: var(--slate-900); }
+  .sidebar-nav { padding: 12px 10px; flex: 1; }
+  .nav-section-label {
+    font-size: 10px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: .07em; color: var(--slate-400);
+    padding: 8px 10px 4px;
+  }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 10px;
+    border-radius: var(--radius-sm);
+    color: var(--slate-600);
+    font-size: 13px; font-weight: 500;
+    cursor: pointer; border: none; background: none; width: 100%;
+    text-align: left;
+    transition: background .15s, color .15s;
+    text-decoration: none;
+  }
+  .nav-item:hover { background: var(--slate-100); color: var(--slate-900); }
+  .nav-item.active { background: var(--primary-light); color: var(--primary); }
+  .nav-icon { width: 16px; height: 16px; opacity: .7; flex-shrink: 0; }
+  .nav-item.active .nav-icon { opacity: 1; }
+  .nav-badge {
+    margin-left: auto;
+    background: var(--danger-text);
+    color: white;
+    font-size: 10px; font-weight: 700;
+    padding: 1px 6px; border-radius: 9999px;
+  }
+  .sidebar-footer {
+    padding: 14px 16px;
+    border-top: 1px solid var(--slate-100);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .avatar {
+    width: 30px; height: 30px; border-radius: 50%;
+    background: linear-gradient(135deg, #818cf8, var(--primary));
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-size: 12px; font-weight: 600; flex-shrink: 0;
+  }
+  .avatar-sm { width: 24px; height: 24px; font-size: 10px; }
+  .sidebar-user-name { font-size: 13px; font-weight: 600; color: var(--slate-800); }
+  .sidebar-user-role { font-size: 11px; color: var(--slate-400); }
+
+  /* ── Main ── */
+  .main { flex: 1; display: flex; flex-direction: column; min-width: 0; overflow-y: auto; }
+  .topbar {
+    height: 56px; background: white;
+    border-bottom: 1px solid var(--slate-200);
+    display: flex; align-items: center;
+    padding: 0 28px; gap: 16px;
+    position: sticky; top: 0; z-index: 20;
+  }
+  .topbar-title { font-size: 16px; font-weight: 700; color: var(--slate-900); flex: 1; }
+  .topbar-actions { display: flex; align-items: center; gap: 10px; }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 7px 14px;
+    border-radius: var(--radius-sm);
+    font-size: 13px; font-weight: 600;
+    cursor: pointer; border: none;
+    transition: all .15s;
+  }
+  .btn-primary { background: var(--primary); color: white; }
+  .btn-primary:hover { background: var(--primary-dark); }
+  .btn-ghost { background: transparent; color: var(--slate-600); }
+  .btn-ghost:hover { background: var(--slate-100); }
+  .btn-outline {
+    background: white; color: var(--slate-700);
+    border: 1px solid var(--slate-200);
+  }
+  .btn-outline:hover { background: var(--slate-50); border-color: var(--slate-300); }
+
+  /* ── Content ── */
+  .content { padding: 24px 28px; display: flex; flex-direction: column; gap: 24px; flex: 1; }
+
+  /* ── Stat strip ── */
+  .stat-strip { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; }
+  .stat-card {
+    background: white; border: 1px solid var(--slate-200);
+    border-radius: var(--radius); padding: 16px 18px;
+    display: flex; flex-direction: column; gap: 6px;
+    box-shadow: var(--shadow-sm);
+  }
+  .stat-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--slate-400); }
+  .stat-value { font-size: 26px; font-weight: 700; color: var(--slate-900); line-height: 1; }
+  .stat-sub { font-size: 12px; color: var(--slate-500); }
+  .stat-card.danger .stat-value { color: var(--danger-text); }
+  .stat-card.warning .stat-value { color: var(--warning-text); }
+  .stat-card.success .stat-value { color: var(--success-text); }
+
+  /* ── Section ── */
+  .section { background: white; border: 1px solid var(--slate-200); border-radius: var(--radius); box-shadow: var(--shadow-sm); overflow: hidden; }
+  .section-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--slate-100);
+    display: flex; align-items: center; gap: 12px;
+  }
+  .section-title { font-size: 14px; font-weight: 700; color: var(--slate-900); flex: 1; }
+  .section-count {
+    font-size: 11px; font-weight: 600;
+    background: var(--slate-100); color: var(--slate-500);
+    padding: 2px 8px; border-radius: 20px;
+  }
+
+  /* ── Filter bar ── */
+  .filter-bar {
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--slate-100);
+    display: flex; align-items: center; gap: 10px;
+    background: var(--slate-50); flex-wrap: wrap;
+  }
+  .search-wrap { position: relative; flex: 1; max-width: 280px; }
+  .search-wrap svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--slate-400); }
+  .search-input {
+    width: 100%; padding: 7px 10px 7px 32px;
+    border: 1px solid var(--slate-200);
+    border-radius: var(--radius-sm);
+    font-size: 13px; color: var(--slate-700);
+    background: white; outline: none;
+    transition: border .15s;
+  }
+  .search-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgb(99 102 241 / .1); }
+  .filter-chip {
+    padding: 6px 12px; border: 1px solid var(--slate-200);
+    border-radius: 20px; font-size: 12px; font-weight: 500;
+    color: var(--slate-600); background: white; cursor: pointer;
+    transition: all .15s;
+  }
+  .filter-chip:hover { border-color: var(--primary); color: var(--primary); }
+  .filter-chip.active { background: var(--primary-light); border-color: var(--primary); color: var(--primary); font-weight: 600; }
+  .filter-spacer { flex: 1; }
+  .filter-select {
+    padding: 6px 10px; border: 1px solid var(--slate-200);
+    border-radius: var(--radius-sm); font-size: 12px;
+    color: var(--slate-600); background: white; outline: none; cursor: pointer;
+  }
+
+  /* ── Table ── */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  thead th {
+    padding: 10px 16px;
+    text-align: left; font-size: 11px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: .06em; color: var(--slate-500);
+    background: white; border-bottom: 1px solid var(--slate-200);
+    white-space: nowrap;
+  }
+  thead th:first-child { padding-left: 20px; }
+  thead th:last-child { padding-right: 20px; }
+  tbody tr { transition: background .1s; cursor: pointer; }
+  tbody tr:hover { background: var(--slate-50); }
+  tbody tr + tr { border-top: 1px solid var(--slate-100); }
+  td { padding: 12px 16px; color: var(--slate-700); vertical-align: middle; }
+  td:first-child { padding-left: 20px; }
+  td:last-child { padding-right: 20px; }
+  .cell-primary { font-weight: 600; color: var(--slate-900); font-size: 13px; }
+  .cell-secondary { font-size: 12px; color: var(--slate-500); margin-top: 1px; }
+  .cell-link { color: var(--primary); font-weight: 600; font-size: 13px; }
+  .cell-link:hover { text-decoration: underline; }
+
+  /* ── Badges ── */
+  .badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 9px; border-radius: 20px;
+    font-size: 11px; font-weight: 600;
+  }
+  .badge-dot { width: 6px; height: 6px; border-radius: 50%; }
+  .badge-success { background: var(--success-bg); color: var(--success-text); }
+  .badge-success .badge-dot { background: var(--success-text); }
+  .badge-warning { background: var(--warning-bg); color: var(--warning-text); }
+  .badge-warning .badge-dot { background: var(--warning-text); }
+  .badge-danger  { background: var(--danger-bg);  color: var(--danger-text);  }
+  .badge-danger  .badge-dot { background: var(--danger-text); }
+  .badge-neutral { background: var(--neutral-bg); color: var(--neutral-text); }
+  .badge-neutral .badge-dot { background: var(--neutral-text); }
+  .badge-primary { background: var(--primary-light); color: var(--primary); }
+  .badge-primary .badge-dot { background: var(--primary); }
+  .badge-blue { background: #f0f9ff; color: #0369a1; }
+  .badge-purple { background: #faf5ff; color: #7c3aed; }
+
+  /* ── Risk pill ── */
+  .risk {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 4px 10px; border-radius: var(--radius-sm);
+    font-size: 12px; font-weight: 700;
+  }
+  .risk-high   { background: var(--danger-bg);  color: var(--danger-text);  }
+  .risk-medium { background: var(--warning-bg); color: var(--warning-text); }
+  .risk-low    { background: var(--success-bg); color: var(--success-text); }
+
+  /* ── Progress bar ── */
+  .prog-wrap { display: flex; align-items: center; gap: 8px; min-width: 110px; }
+  .prog-bar { flex: 1; height: 5px; background: var(--slate-200); border-radius: 9999px; overflow: hidden; }
+  .prog-fill { height: 100%; border-radius: 9999px; }
+  .prog-fill-green  { background: #22c55e; }
+  .prog-fill-amber  { background: #f59e0b; }
+  .prog-fill-red    { background: #f43f5e; }
+  .prog-label { font-size: 11px; font-weight: 600; color: var(--slate-500); white-space: nowrap; }
+
+  /* ── Deadline ── */
+  .deadline-ok     { color: var(--slate-600); font-size: 12px; }
+  .deadline-near   { color: var(--warning-text); font-weight: 600; font-size: 12px; }
+  .deadline-overdue{ color: var(--danger-text);  font-weight: 600; font-size: 12px; }
+
+  /* ── Owner chip ── */
+  .owner { display: flex; align-items: center; gap: 6px; }
+  .owner-name { font-size: 12px; color: var(--slate-600); }
+
+  /* ── Nudge ── */
+  .nudge { font-size: 11px; color: var(--slate-400); white-space: nowrap; }
+  .nudge-alert { color: var(--danger-text); font-weight: 600; }
+
+  /* ── Pagination ── */
+  .pagination {
+    padding: 12px 20px;
+    border-top: 1px solid var(--slate-100);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .pag-info { font-size: 12px; color: var(--slate-400); }
+  .pag-btns { display: flex; gap: 6px; }
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+  <!-- ── Sidebar ── -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-mark">A</div>
+      <span class="sidebar-logo-name">Atlas</span>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Workspace</div>
+      <a class="nav-item" href="dashboard.html">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+        Dashboard
+      </a>
+      <a class="nav-item" href="agent-hub.html">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/></svg>
+        Inbox
+        <span class="nav-badge">5</span>
+      </a>
+      <a class="nav-item active" href="projects-list.html">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+        Projects
+      </a>
+      <a class="nav-item" href="clients-list.html">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        Clients
+      </a>
+      <a class="nav-item" href="workflow-live.html">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+        Workflows
+      </a>
+
+      <div class="nav-section-label" style="margin-top:12px">Reports</div>
+      <a class="nav-item" href="dashboard.html">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+        Analytics
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="avatar">SM</div>
+      <div>
+        <div class="sidebar-user-name">Sarah M.</div>
+        <div class="sidebar-user-role">Senior Manager</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ── Main ── -->
+  <div class="main">
+
+    <header class="topbar">
+      <span class="topbar-title">Projects</span>
+      <div class="topbar-actions">
+        <button class="btn btn-ghost" style="padding:7px 10px;" title="Notifications">
+          <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+        </button>
+        <button class="btn btn-primary">
+          <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+          New Project
+        </button>
+      </div>
+    </header>
+
+    <div class="content">
+
+      <div class="stat-strip">
+        <div class="stat-card">
+          <div class="stat-label">Total Projects</div>
+          <div class="stat-value">23</div>
+          <div class="stat-sub">18 active · 5 complete</div>
+        </div>
+        <div class="stat-card danger">
+          <div class="stat-label">At Risk</div>
+          <div class="stat-value">4</div>
+          <div class="stat-sub">stale docs or overdue</div>
+        </div>
+        <div class="stat-card warning">
+          <div class="stat-label">Pending Review</div>
+          <div class="stat-value">6</div>
+          <div class="stat-sub">awaiting accountant action</div>
+        </div>
+        <div class="stat-card success">
+          <div class="stat-label">Completed (MTD)</div>
+          <div class="stat-value">3</div>
+          <div class="stat-sub">this month</div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-header">
+          <span class="section-title">All Projects</span>
+          <span class="section-count">23 total</span>
+          <button class="btn btn-outline" style="font-size:12px;padding:5px 12px;">Export</button>
+          <button class="btn btn-primary" style="font-size:12px;padding:5px 12px;">+ New Project</button>
+        </div>
+        <div class="filter-bar">
+          <div class="search-wrap">
+            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
+            <input class="search-input" type="text" placeholder="Search by project, client, owner…" />
+          </div>
+          <button class="filter-chip active" onclick="filterChip(this)">All</button>
+          <button class="filter-chip" onclick="filterChip(this)">Tax Prep</button>
+          <button class="filter-chip" onclick="filterChip(this)">Book Close</button>
+          <button class="filter-chip" onclick="filterChip(this)">Audit</button>
+          <button class="filter-chip" onclick="filterChip(this)">Payroll</button>
+          <div class="filter-spacer"></div>
+          <select class="filter-select"><option>All owners</option><option>Sarah M.</option><option>James K.</option><option>Priya R.</option><option>Alex L.</option></select>
+          <select class="filter-select"><option>All statuses</option><option>In Progress</option><option>In Review</option><option>Blocked</option><option>Complete</option></select>
+          <select class="filter-select"><option>All risk</option><option>High</option><option>Medium</option><option>Low</option></select>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Project</th><th>Client</th><th>Type</th><th>Period</th><th>Created</th><th>Deadline</th><th>Doc Progress</th><th>Risk</th><th>Owner</th><th>Status</th><th></th></tr>
+            </thead>
+            <tbody>
+              <tr onclick="window.location.href='project-detail.html'">
+                <td><div class="cell-link">Tax Prep 2025</div><div class="cell-secondary">#PRJ-001</div></td>
+                <td><div class="cell-primary">Acme Corp</div></td>
+                <td><span class="badge badge-primary">Tax Prep</span></td>
+                <td><div style="font-size:12px;color:var(--slate-600)">FY 2025</div></td>
+                <td><div style="font-size:12px;color:var(--slate-500)">Mar 12</div></td>
+                <td><div class="deadline-near">Apr 30</div><div class="nudge nudge-alert">⚠ 8d</div></td>
+                <td><div class="prog-wrap"><div class="prog-bar"><div class="prog-fill prog-fill-amber" style="width:55%"></div></div><span class="prog-label">6/11</span></div></td>
+                <td><span class="risk risk-high">⬤ High</span></td>
+                <td><div class="owner"><div class="avatar avatar-sm">SM</div><span class="owner-name">Sarah M.</span></div></td>
+                <td><span class="badge badge-warning"><span class="badge-dot"></span>In Review</span></td>
+                <td><button class="btn btn-ghost" style="padding:4px 8px;font-size:11px;" onclick="event.stopPropagation();window.location.href='project-detail.html'">Open</button></td>
+              </tr>
+              <tr onclick="window.location.href='project-detail.html'">
+                <td><div class="cell-link">Book Close Q1 2026</div><div class="cell-secondary">#PRJ-002</div></td>
+                <td><div class="cell-primary">Bridgewater LLC</div></td>
+                <td><span class="badge badge-neutral">Book Close</span></td>
+                <td><div style="font-size:12px;color:var(--slate-600)">Q1 2026</div></td>
+                <td><div style="font-size:12px;color:var(--slate-500)">Apr 1</div></td>
+                <td><div class="deadline-near">Apr 25</div><div class="nudge nudge-alert">⚠ 3d</div></td>
+                <td><div class="prog-wrap"><div class="prog-bar"><div class="prog-fill prog-fill-red" style="width:30%"></div></div><span class="prog-label">3/10</span></div></td>
+                <td><span class="risk risk-high">⬤ High</span></td>
+                <td><div class="owner"><div class="avatar avatar-sm" style="background:linear-gradient(135deg,#34d399,#059669)">JK</div><span class="owner-name">James K.</span></div></td>
+                <td><span class="badge badge-danger"><span class="badge-dot"></span>Blocked</span></td>
+                <td><button class="btn btn-ghost" style="padding:4px 8px;font-size:11px;" onclick="event.stopPropagation();window.location.href='project-detail.html'">Open</button></td>
+              </tr>
+              <tr onclick="window.location.href='project-detail.html'">
+                <td><div class="cell-link">Tax Prep 2025</div><div class="cell-secondary">#PRJ-003</div></td>
+                <td><div class="cell-primary">NovaTech Inc</div></td>
+                <td><span class="badge badge-primary">Tax Prep</span></td>
+                <td><div style="font-size:12px;color:var(--slate-600)">FY 2025</div></td>
+                <td><div style="font-size:12px;color:var(--slate-500)">Feb 20</div></td>
+                <td><div class="deadline-ok">May 15</div><div class="nudge">23d left</div></td>
+                <td><div class="prog-wrap"><div class="prog-bar"><div class="prog-fill prog-fill-amber" style="width:70%"></div></div><span class="prog-label">7/10</span></div></td>
+                <td><span class="risk risk-medium">⬤ Medium</span></td>
+                <td><div class="owner"><div class="avatar avatar-sm" style="background:linear-gradient(135deg,#fb923c,#ea580c)">PR</div><span class="owner-name">Priya R.</span></div></td>
+                <td><span class="badge badge-primary"><span class="badge-dot"></span>In Progress</span></td>
+                <td><button class="btn btn-ghost" style="padding:4px 8px;font-size:11px;" onclick="event.stopPropagation();window.location.href='project-detail.html'">Open</button></td>
+              </tr>
+              <tr onclick="window.location.href='project-detail.html'">
+                <td><div class="cell-link">Audit Prep 2025</div><div class="cell-secondary">#PRJ-004</div></td>
+                <td><div class="cell-primary">Greenfield Partners</div></td>
+                <td><span class="badge badge-blue">Audit</span></td>
+                <td><div style="font-size:12px;color:var(--slate-600)">FY 2025</div></td>
+                <td><div style="font-size:12px;color:var(--slate-500)">Jan 15</div></td>
+                <td><div class="deadline-ok">Jun 1</div><div class="nudge">40d left</div></td>
+                <td><div class="prog-wrap"><div class="prog-bar"><div class="prog-fill prog-fill-green" style="width:88%"></div></div><span class="prog-label">15/17</span></div></td>
+                <td><span class="risk risk-low">⬤ Low</span></td>
+                <td><div class="owner"><div class="avatar avatar-sm">SM</div><span class="owner-name">Sarah M.</span></div></td>
+                <td><span class="badge badge-primary"><span class="badge-dot"></span>In Progress</span></td>
+                <td><button class="btn btn-ghost" style="padding:4px 8px;font-size:11px;" onclick="event.stopPropagation();window.location.href='project-detail.html'">Open</button></td>
+              </tr>
+              <tr onclick="window.location.href='project-detail.html'">
+                <td><div class="cell-link">Book Close Q4 2025</div><div class="cell-secondary">#PRJ-005</div></td>
+                <td><div class="cell-primary">Stellar Dynamics</div></td>
+                <td><span class="badge badge-neutral">Book Close</span></td>
+                <td><div style="font-size:12px;color:var(--slate-600)">Q4 2025</div></td>
+                <td><div style="font-size:12px;color:var(--slate-500)">Dec 3</div></td>
+                <td><div class="deadline-ok">Apr 30</div><div class="nudge">8d left</div></td>
+                <td><div class="prog-wrap"><div class="prog-bar"><div class="prog-fill prog-fill-green" style="width:100%"></div></div><span class="prog-label">12/12</span></div></td>
+                <td><span class="risk risk-low">⬤ Low</span></td>
+                <td><div class="owner"><div class="avatar avatar-sm" style="background:linear-gradient(135deg,#a78bfa,#7c3aed)">AL</div><span class="owner-name">Alex L.</span></div></td>
+                <td><span class="badge badge-success"><span class="badge-dot"></span>Complete</span></td>
+                <td><button class="btn btn-ghost" style="padding:4px 8px;font-size:11px;" onclick="event.stopPropagation();window.location.href='project-detail.html'">Open</button></td>
+              </tr>
+              <tr onclick="window.location.href='project-detail.html'">
+                <td><div class="cell-link">Tax Prep 2025</div><div class="cell-secondary">#PRJ-006</div></td>
+                <td><div class="cell-primary">Harbor Ventures</div></td>
+                <td><span class="badge badge-primary">Tax Prep</span></td>
+                <td><div style="font-size:12px;color:var(--slate-600)">FY 2025</div></td>
+                <td><div style="font-size:12px;color:var(--slate-500)">Mar 5</div></td>
+                <td><div class="deadline-near">Apr 28</div><div class="nudge nudge-alert">⚠ 6d</div></td>
+                <td><div class="prog-wrap"><div class="prog-bar"><div class="prog-fill prog-fill-amber" style="width:45%"></div></div><span class="prog-label">4/9</span></div></td>
+                <td><span class="risk risk-high">⬤ High</span></td>
+                <td><div class="owner"><div class="avatar avatar-sm" style="background:linear-gradient(135deg,#34d399,#059669)">JK</div><span class="owner-name">James K.</span></div></td>
+                <td><span class="badge badge-warning"><span class="badge-dot"></span>In Review</span></td>
+                <td><button class="btn btn-ghost" style="padding:4px 8px;font-size:11px;" onclick="event.stopPropagation();window.location.href='project-detail.html'">Open</button></td>
+              </tr>
+              <tr onclick="window.location.href='project-detail.html'">
+                <td><div class="cell-link">Payroll Compliance 2025</div><div class="cell-secondary">#PRJ-007</div></td>
+                <td><div class="cell-primary">Apex Industries</div></td>
+                <td><span class="badge badge-purple">Payroll</span></td>
+                <td><div style="font-size:12px;color:var(--slate-600)">FY 2025</div></td>
+                <td><div style="font-size:12px;color:var(--slate-500)">Feb 8</div></td>
+                <td><div class="deadline-ok">May 31</div><div class="nudge">39d left</div></td>
+                <td><div class="prog-wrap"><div class="prog-bar"><div class="prog-fill prog-fill-amber" style="width:60%"></div></div><span class="prog-label">6/10</span></div></td>
+                <td><span class="risk risk-medium">⬤ Medium</span></td>
+                <td><div class="owner"><div class="avatar avatar-sm" style="background:linear-gradient(135deg,#fb923c,#ea580c)">PR</div><span class="owner-name">Priya R.</span></div></td>
+                <td><span class="badge badge-primary"><span class="badge-dot"></span>In Progress</span></td>
+                <td><button class="btn btn-ghost" style="padding:4px 8px;font-size:11px;" onclick="event.stopPropagation();window.location.href='project-detail.html'">Open</button></td>
+              </tr>
+              <tr onclick="window.location.href='project-detail.html'">
+                <td><div class="cell-link">Book Close Q1 2026</div><div class="cell-secondary">#PRJ-008</div></td>
+                <td><div class="cell-primary">Sunrise Capital</div></td>
+                <td><span class="badge badge-neutral">Book Close</span></td>
+                <td><div style="font-size:12px;color:var(--slate-600)">Q1 2026</div></td>
+                <td><div style="font-size:12px;color:var(--slate-500)">Apr 5</div></td>
+                <td><div class="deadline-ok">May 10</div><div class="nudge">18d left</div></td>
+                <td><div class="prog-wrap"><div class="prog-bar"><div class="prog-fill prog-fill-green" style="width:80%"></div></div><span class="prog-label">8/10</span></div></td>
+                <td><span class="risk risk-low">⬤ Low</span></td>
+                <td><div class="owner"><div class="avatar avatar-sm" style="background:linear-gradient(135deg,#a78bfa,#7c3aed)">AL</div><span class="owner-name">Alex L.</span></div></td>
+                <td><span class="badge badge-primary"><span class="badge-dot"></span>In Progress</span></td>
+                <td><button class="btn btn-ghost" style="padding:4px 8px;font-size:11px;" onclick="event.stopPropagation();window.location.href='project-detail.html'">Open</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pagination">
+          <span class="pag-info">Showing 8 of 23 projects</span>
+          <div class="pag-btns">
+            <button class="btn btn-ghost" style="padding:5px 10px;font-size:12px;">← Prev</button>
+            <button class="btn btn-ghost" style="padding:5px 10px;font-size:12px;background:var(--primary-light);color:var(--primary)">1</button>
+            <button class="btn btn-ghost" style="padding:5px 10px;font-size:12px;">2</button>
+            <button class="btn btn-ghost" style="padding:5px 10px;font-size:12px;">3</button>
+            <button class="btn btn-ghost" style="padding:5px 10px;font-size:12px;">Next →</button>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- .content -->
+  </div><!-- .main -->
+
+</div><!-- .shell -->
+
+<script>
+  function filterChip(el) {
+    el.closest('.filter-bar').querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+    el.classList.add('active');
+  }
+</script>
+
+</body>
+</html>

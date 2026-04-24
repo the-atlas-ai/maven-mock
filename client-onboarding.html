@@ -1,0 +1,1135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Atlas — New Client Setup</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --slate-50:  #f8fafc; --slate-100: #f1f5f9; --slate-200: #e2e8f0;
+  --slate-300: #cbd5e1; --slate-400: #94a3b8; --slate-500: #64748b;
+  --slate-600: #475569; --slate-700: #334155; --slate-800: #1e293b; --slate-900: #0f172a;
+  --indigo-50: #eef2ff; --indigo-100: #e0e7ff;
+  --indigo-500: #6366f1; --indigo-600: #4f46e5;
+  --green-50: #f0fdf4; --green-100: #dcfce7;
+  --green-500: #22c55e; --green-600: #16a34a; --green-700: #15803d;
+  --amber-50: #fffbeb; --amber-100: #fef3c7;
+  --amber-500: #f59e0b; --amber-600: #d97706; --amber-700: #b45309;
+  --violet-100: #ede9fe; --violet-600: #7c3aed;
+  --blue-50: #eff6ff; --blue-100: #dbeafe; --blue-600: #2563eb;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 13px; background: var(--slate-50); color: var(--slate-900);
+  display: flex; height: 100vh; overflow: hidden;
+}
+
+/* ── Sidebar (standard) ── */
+.sidebar { width: 220px; flex-shrink: 0; background: white; border-right: 1px solid var(--slate-200); display: flex; flex-direction: column; height: 100vh; position: sticky; top: 0; }
+.sidebar-logo { padding: 20px 20px 16px; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 10px; }
+.sidebar-logo-mark { width: 30px; height: 30px; background: linear-gradient(135deg, #6366f1, #4f46e5); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 13px; }
+.sidebar-logo-name { font-weight: 700; font-size: 15px; color: #0f172a; }
+.sidebar-nav { padding: 12px 10px; flex: 1; overflow-y: auto; }
+.nav-section-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .07em; color: #94a3b8; padding: 8px 10px 4px; }
+.nav-item { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 7px; color: #475569; font-size: 13px; font-weight: 500; cursor: pointer; border: none; background: none; width: 100%; text-align: left; transition: background .15s, color .15s; text-decoration: none; }
+.nav-item:hover { background: #f1f5f9; color: #0f172a; }
+.nav-item.active { background: #eef2ff; color: #4f46e5; }
+.nav-icon { width: 16px; height: 16px; opacity: .7; flex-shrink: 0; }
+.nav-item.active .nav-icon { opacity: 1; }
+.nav-badge { margin-left: auto; background: #be123c; color: white; font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 9999px; }
+.sidebar-footer { padding: 14px 16px; border-top: 1px solid #f1f5f9; display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.sidebar-avatar { width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(135deg, #818cf8, #4f46e5); display: flex; align-items: center; justify-content: center; color: white; font-size: 12px; font-weight: 600; flex-shrink: 0; }
+.sidebar-user-name { font-size: 13px; font-weight: 600; color: #1e293b; }
+.sidebar-user-role { font-size: 11px; color: #94a3b8; }
+
+/* ── Main ── */
+.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+/* ── Topbar ── */
+.topbar {
+  height: 52px; background: white; border-bottom: 1px solid var(--slate-200);
+  display: flex; align-items: center; padding: 0 18px; gap: 10px; flex-shrink: 0;
+}
+.breadcrumb { font-size: 12px; color: var(--slate-400); display: flex; align-items: center; gap: 5px; }
+.breadcrumb a { color: var(--slate-400); text-decoration: none; }
+.breadcrumb a:hover { color: var(--indigo-500); }
+.bc-sep { color: var(--slate-300); }
+.bc-cur { color: var(--slate-700); font-weight: 600; }
+.tb-spacer { flex: 1; }
+.step-counter { font-size: 11px; color: var(--slate-400); }
+.step-counter span { color: var(--slate-700); font-weight: 600; }
+
+/* ── Body ── */
+.body { flex: 1; display: flex; overflow: hidden; }
+
+/* ── Step sidebar ── */
+.step-sidebar {
+  width: 208px; background: white; border-right: 1px solid var(--slate-200);
+  padding: 20px 0; flex-shrink: 0; display: flex; flex-direction: column;
+}
+.step-sidebar-title {
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .07em; color: var(--slate-400); padding: 0 16px; margin-bottom: 12px;
+}
+.step-item {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 8px 16px; cursor: pointer; position: relative;
+}
+.step-item:not(:last-child)::after {
+  content: ''; position: absolute;
+  left: 24px; top: 32px; width: 1.5px; height: calc(100% - 12px);
+  background: var(--slate-200);
+}
+.step-item.done::after  { background: var(--green-500); }
+.step-item.active::after { background: var(--slate-200); }
+
+.step-dot {
+  width: 18px; height: 18px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9px; font-weight: 700; margin-top: 1px;
+  border: 1.5px solid var(--slate-300); color: var(--slate-400); background: white;
+}
+.step-item.done  .step-dot { background: var(--green-500); border-color: var(--green-500); color: white; }
+.step-item.active .step-dot { background: var(--indigo-500); border-color: var(--indigo-500); color: white; }
+
+.step-info { flex: 1; min-width: 0; }
+.step-name { font-size: 12px; font-weight: 500; color: var(--slate-500); }
+.step-item.done   .step-name { color: var(--slate-500); }
+.step-item.active .step-name { color: var(--slate-900); font-weight: 600; }
+.step-sub { font-size: 10px; color: var(--slate-400); margin-top: 1px; }
+.step-item.active .step-sub { color: var(--indigo-500); }
+
+/* client summary card (bottom of step sidebar) */
+.client-summary {
+  margin-top: auto; padding: 12px 14px; margin-left: 10px; margin-right: 10px;
+  background: var(--slate-50); border: 1px solid var(--slate-200);
+  border-radius: 8px; display: none;
+}
+.client-summary.visible { display: block; }
+.cs-label { font-size: 9px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .07em; color: var(--slate-400); margin-bottom: 6px; }
+.cs-name { font-size: 12px; font-weight: 600; color: var(--slate-800); }
+.cs-meta { font-size: 10px; color: var(--slate-500); margin-top: 2px; }
+.cs-sources {
+  display: flex; gap: 4px; margin-top: 8px; flex-wrap: wrap;
+}
+.cs-src {
+  font-size: 9px; font-weight: 600; padding: 2px 5px; border-radius: 4px;
+  background: var(--green-50); color: var(--green-700);
+}
+
+/* ── Content panel ── */
+.content {
+  flex: 1; overflow-y: auto; padding: 28px 32px 32px;
+  display: flex; flex-direction: column; gap: 24px;
+}
+
+/* step header */
+.s-head { }
+.s-head h1 { font-size: 18px; font-weight: 700; color: var(--slate-900); }
+.s-head p  { font-size: 13px; color: var(--slate-500); margin-top: 4px; line-height: 1.5; }
+
+/* ── Step 1: Form ── */
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; max-width: 600px; }
+.form-grid .full { grid-column: 1 / -1; }
+.field { display: flex; flex-direction: column; gap: 5px; }
+.field label { font-size: 11px; font-weight: 600; color: var(--slate-600); }
+.field input, .field select {
+  padding: 8px 10px; font-size: 13px; border: 1.5px solid var(--slate-200);
+  border-radius: 7px; background: white; color: var(--slate-900);
+  outline: none; transition: border-color .12s;
+  appearance: none; -webkit-appearance: none;
+  font-family: inherit;
+}
+.field input:focus, .field select:focus { border-color: var(--indigo-500); }
+.field .hint { font-size: 10px; color: var(--slate-400); }
+
+/* ── Step 2: Connect Sources ── */
+.source-section { }
+.source-section-title {
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .07em; color: var(--slate-400); margin-bottom: 10px;
+}
+.source-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; margin-bottom: 20px; }
+.source-card {
+  border: 1.5px solid var(--slate-200); border-radius: 9px; padding: 14px 12px;
+  display: flex; align-items: center; gap: 10px; background: white; cursor: pointer;
+  transition: border-color .12s, box-shadow .12s;
+}
+.source-card:hover { border-color: var(--indigo-500); box-shadow: 0 2px 8px rgba(99,102,241,.1); }
+.source-card.connected { border-color: var(--green-500); background: var(--green-50); }
+.source-logo {
+  width: 34px; height: 34px; border-radius: 7px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 700;
+}
+.source-info { flex: 1; min-width: 0; }
+.source-name { font-size: 12px; font-weight: 600; color: var(--slate-800); }
+.source-status { font-size: 10px; margin-top: 1px; }
+.source-card.connected .source-status { color: var(--green-600); font-weight: 600; }
+.source-card:not(.connected) .source-status { color: var(--slate-400); }
+.source-check {
+  width: 16px; height: 16px; border-radius: 50%;
+  background: var(--green-500); color: white;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.source-plus {
+  width: 16px; height: 16px; border-radius: 50%;
+  background: var(--slate-100); color: var(--slate-400);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+
+/* ── Step 3: AI Analysis ── */
+.analysis-card {
+  background: var(--slate-900); border-radius: 10px;
+  overflow: hidden; max-width: 640px;
+}
+.analysis-header {
+  padding: 14px 16px; border-bottom: 1px solid rgba(255,255,255,.06);
+  display: flex; align-items: center; gap: 10px;
+}
+.analysis-title { font-size: 13px; font-weight: 600; color: rgba(255,255,255,.85); }
+.analysis-prog-wrap { flex: 1; }
+.analysis-prog-bar {
+  height: 4px; background: rgba(255,255,255,.08); border-radius: 2px; overflow: hidden;
+}
+.analysis-prog-fill {
+  height: 100%; border-radius: 2px;
+  background: linear-gradient(90deg, var(--indigo-500), var(--green-500));
+  transition: width 1.2s ease;
+}
+.analysis-pct { font-size: 11px; color: rgba(255,255,255,.4); font-variant-numeric: tabular-nums; }
+
+.analysis-log {
+  padding: 10px 0; min-height: 200px;
+  font-family: "SF Mono","Fira Code","Fira Mono",monospace; font-size: 11px;
+}
+.al-entry {
+  display: grid; grid-template-columns: 68px 1fr;
+  gap: 0 8px; padding: 2px 16px; line-height: 1.7;
+  opacity: 0; animation: fade-in .3s forwards;
+}
+@keyframes fade-in { to { opacity: 1; } }
+.al-cat { color: rgba(255,255,255,.3); font-size: 10px; text-transform: uppercase; letter-spacing: .04em; }
+.al-msg { color: rgba(255,255,255,.72); }
+.al-msg .hl { color: white; font-weight: 600; }
+.al-msg .ok { color: #4ade80; font-weight: 600; }
+.al-msg .muted { color: rgba(255,255,255,.28); }
+.al-sep { padding: 3px 16px 3px 92px; color: rgba(255,255,255,.07); font-size: 10px; }
+
+.analysis-summary {
+  display: none; padding: 14px 16px;
+  border-top: 1px solid rgba(255,255,255,.06);
+  display: none; gap: 24px;
+}
+.analysis-summary.visible { display: flex; }
+.as-stat { text-align: center; }
+.as-val { font-size: 18px; font-weight: 700; color: white; }
+.as-key { font-size: 10px; color: rgba(255,255,255,.35); margin-top: 2px; }
+
+/* ── Step 4: Rule suggestions ── */
+.rules-meta {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+}
+.rules-count-badge {
+  font-size: 12px; color: var(--slate-600);
+}
+.rules-count-badge strong { color: var(--slate-900); }
+.rule-filter-tabs { display: flex; gap: 4px; margin-left: auto; }
+.rtab {
+  font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 6px;
+  border: 1px solid var(--slate-200); background: white; color: var(--slate-500);
+  cursor: pointer; transition: all .12s;
+}
+.rtab.active { background: var(--indigo-50); border-color: var(--indigo-200); color: var(--indigo-600); }
+.rtab .rc { margin-left: 4px; font-size: 10px; color: var(--slate-400); }
+.rtab.active .rc { color: var(--indigo-400); }
+
+.rules-list { display: flex; flex-direction: column; gap: 8px; max-width: 760px; }
+.rule-card {
+  border: 1px solid var(--slate-200); border-radius: 9px; padding: 12px 14px;
+  background: white; display: flex; align-items: flex-start; gap: 12px;
+  transition: border-color .12s;
+}
+.rule-card:hover { border-color: var(--slate-300); }
+.rule-card.accepted { border-color: var(--green-500); background: var(--green-50); }
+.rule-card.dismissed { opacity: .45; }
+.rule-icon {
+  width: 30px; height: 30px; border-radius: 7px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; margin-top: 1px;
+}
+.rule-body { flex: 1; min-width: 0; }
+.rule-top { display: flex; align-items: flex-start; gap: 8px; }
+.rule-trigger { font-size: 12px; font-weight: 600; color: var(--slate-800); }
+.rule-card.accepted .rule-trigger { color: var(--green-800); }
+.rule-conf {
+  font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 4px;
+  white-space: nowrap; margin-left: auto;
+}
+.conf-high   { background: var(--green-50);   color: var(--green-700); }
+.conf-medium { background: var(--amber-50);   color: var(--amber-700); }
+.conf-low    { background: #fff1f2;            color: #be123c; }
+.rule-desc { font-size: 11px; color: var(--slate-500); margin-top: 3px; line-height: 1.5; }
+.rule-card.accepted .rule-desc { color: var(--green-700); }
+.rule-routing {
+  display: flex; align-items: center; gap: 6px; margin-top: 7px; flex-wrap: wrap;
+}
+.r-from, .r-to {
+  font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 5px;
+}
+.r-from { background: var(--slate-100); color: var(--slate-700); }
+.r-to   { background: var(--indigo-50); color: var(--indigo-700); }
+.rule-card.accepted .r-to { background: var(--green-100); color: var(--green-800); }
+.r-arrow { color: var(--slate-300); font-size: 12px; }
+.rule-actions { display: flex; gap: 6px; flex-shrink: 0; margin-top: 1px; }
+.rule-btn {
+  font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 6px;
+  cursor: pointer; border: 1px solid transparent; transition: all .12s;
+}
+.rule-btn.accept {
+  background: var(--indigo-50); color: var(--indigo-600); border-color: var(--indigo-200);
+}
+.rule-btn.accept:hover { background: var(--indigo-100); }
+.rule-btn.accepted-state {
+  background: var(--green-50); color: var(--green-700); border-color: var(--green-200);
+  cursor: default;
+}
+.rule-btn.edit {
+  background: white; color: var(--slate-500); border-color: var(--slate-200);
+}
+.rule-btn.edit:hover { border-color: var(--slate-300); color: var(--slate-700); }
+.rule-btn.dismiss {
+  background: white; color: var(--slate-400); border-color: var(--slate-200);
+}
+.rule-btn.dismiss:hover { color: #be123c; border-color: #fecdd3; }
+.rule-needs-input {
+  background: var(--amber-50); border-color: var(--amber-200);
+}
+.rule-needs-input .rule-trigger { color: var(--amber-800); }
+.select-coa {
+  font-size: 11px; padding: 4px 8px; border: 1px solid var(--amber-300);
+  border-radius: 6px; background: white; color: var(--slate-700);
+  cursor: pointer; font-family: inherit;
+}
+.rules-progress {
+  font-size: 11px; color: var(--slate-500);
+}
+.rules-progress strong { color: var(--green-700); }
+
+/* ── Step 5: Launch ── */
+.launch-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; max-width: 600px; }
+.launch-card {
+  border: 1px solid var(--slate-200); border-radius: 10px; padding: 16px;
+  background: white;
+}
+.lc-icon {
+  width: 32px; height: 32px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center; margin-bottom: 10px;
+}
+.lc-val { font-size: 22px; font-weight: 700; color: var(--slate-900); }
+.lc-key { font-size: 11px; color: var(--slate-500); margin-top: 2px; }
+.launch-cta {
+  max-width: 600px; background: var(--indigo-50);
+  border: 1px solid var(--indigo-200); border-radius: 10px; padding: 18px 20px;
+  display: flex; align-items: center; gap: 14px;
+}
+.launch-cta-text h3 { font-size: 14px; font-weight: 700; color: var(--slate-900); }
+.launch-cta-text p  { font-size: 12px; color: var(--slate-500); margin-top: 3px; }
+.launch-cta-btns { margin-left: auto; display: flex; gap: 8px; }
+
+/* ── Nav buttons (bottom of content) ── */
+.nav-btns {
+  display: flex; align-items: center; gap: 10px;
+  padding-top: 8px; border-top: 1px solid var(--slate-200); margin-top: auto;
+}
+.btn-back {
+  font-size: 12px; font-weight: 600; padding: 7px 14px;
+  border: 1px solid var(--slate-200); border-radius: 7px;
+  background: white; color: var(--slate-600); cursor: pointer;
+}
+.btn-back:hover { border-color: var(--slate-300); }
+.btn-next {
+  font-size: 12px; font-weight: 600; padding: 7px 16px;
+  border: none; border-radius: 7px;
+  background: var(--indigo-600); color: white; cursor: pointer;
+  transition: background .12s;
+}
+.btn-next:hover { background: var(--indigo-700); }
+.btn-next.green { background: var(--green-600); }
+.btn-next.green:hover { background: var(--green-700); }
+.btn-skip { font-size: 11px; color: var(--slate-400); cursor: pointer; margin-left: auto; }
+.btn-skip:hover { color: var(--slate-600); }
+
+/* ── Hide/show steps ── */
+.step-panel { display: none; flex-direction: column; gap: 20px; height: 100%; }
+.step-panel.visible { display: flex; }
+</style>
+</head>
+<body>
+
+<!-- ── Sidebar ── -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="sidebar-logo-mark">A</div>
+    <span class="sidebar-logo-name">Atlas</span>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">Workspace</div>
+    <a class="nav-item" href="dashboard.html">
+      <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+      Dashboard
+    </a>
+    <a class="nav-item" href="agent-hub.html">
+      <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/></svg>
+      Inbox
+      <span class="nav-badge">5</span>
+    </a>
+    <a class="nav-item" href="dashboard.html">
+      <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+      Projects
+    </a>
+    <a class="nav-item active" href="clients-list.html">
+      <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+      Clients
+    </a>
+    <a class="nav-item" href="workflow-live.html">
+      <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+      Workflows
+    </a>
+    <div class="nav-section-label" style="margin-top:8px">Reports</div>
+    <a class="nav-item" href="dashboard.html">
+      <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+      Analytics
+    </a>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="sidebar-avatar">SM</div>
+    <div>
+      <div class="sidebar-user-name">Sarah M.</div>
+      <div class="sidebar-user-role">Senior Manager</div>
+    </div>
+  </div>
+</aside>
+
+<!-- ── Main ── -->
+<div class="main">
+
+  <!-- Topbar -->
+  <div class="topbar">
+    <div class="breadcrumb">
+      <a href="index.html">← Clients</a>
+      <span class="bc-sep">/</span>
+      <span class="bc-cur">New Client Setup</span>
+    </div>
+    <div class="tb-spacer"></div>
+    <span class="step-counter">Step <span id="step-num">1</span> of 5</span>
+  </div>
+
+  <!-- Body -->
+  <div class="body">
+
+    <!-- Step sidebar -->
+    <div class="step-sidebar">
+      <div class="step-sidebar-title">Setup steps</div>
+
+      <div class="step-item active" id="si-1" onclick="goStep(1)">
+        <div class="step-dot" id="sd-1">1</div>
+        <div class="step-info">
+          <div class="step-name">Client Details</div>
+          <div class="step-sub" id="ss-1">Name, entity, fiscal year</div>
+        </div>
+      </div>
+      <div class="step-item" id="si-2" onclick="goStep(2)">
+        <div class="step-dot" id="sd-2">2</div>
+        <div class="step-info">
+          <div class="step-name">Connect Sources</div>
+          <div class="step-sub" id="ss-2">Banks, accounting, payroll</div>
+        </div>
+      </div>
+      <div class="step-item" id="si-3" onclick="goStep(3)">
+        <div class="step-dot" id="sd-3">3</div>
+        <div class="step-info">
+          <div class="step-name">Discover Patterns</div>
+          <div class="step-sub" id="ss-3">AI reads historical data</div>
+        </div>
+      </div>
+      <div class="step-item" id="si-4" onclick="goStep(4)">
+        <div class="step-dot" id="sd-4">4</div>
+        <div class="step-info">
+          <div class="step-name">Review Rules</div>
+          <div class="step-sub" id="ss-4">Approve AI-suggested rules</div>
+        </div>
+      </div>
+      <div class="step-item" id="si-5" onclick="goStep(5)">
+        <div class="step-dot" id="sd-5">5</div>
+        <div class="step-info">
+          <div class="step-name">Launch</div>
+          <div class="step-sub" id="ss-5">Run first workflow</div>
+        </div>
+      </div>
+
+      <div class="client-summary" id="client-summary">
+        <div class="cs-label">Setting up</div>
+        <div class="cs-name" id="cs-name">—</div>
+        <div class="cs-meta" id="cs-meta">—</div>
+        <div class="cs-sources" id="cs-sources"></div>
+      </div>
+    </div>
+
+    <!-- Content panel -->
+    <div class="content" id="content">
+
+      <!-- ── Step 1: Client Details ── -->
+      <div class="step-panel visible" id="panel-1">
+        <div class="s-head">
+          <h1>Client details</h1>
+          <p>Basic information used across all workflows, reports, and filings for this client.</p>
+        </div>
+        <div class="form-grid">
+          <div class="field full">
+            <label>Client name</label>
+            <input type="text" id="f-name" value="NovaTech Solutions Inc." placeholder="e.g. Acme Corp" />
+          </div>
+          <div class="field">
+            <label>Entity type</label>
+            <select id="f-entity">
+              <option>S-Corporation</option>
+              <option>C-Corporation</option>
+              <option selected>LLC</option>
+              <option>Partnership</option>
+              <option>Sole Proprietor</option>
+              <option>Non-profit</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Industry</label>
+            <select id="f-industry">
+              <option selected>Technology / SaaS</option>
+              <option>Retail / E-commerce</option>
+              <option>Professional Services</option>
+              <option>Restaurant / Hospitality</option>
+              <option>Healthcare</option>
+              <option>Real Estate</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Fiscal year end</label>
+            <select id="f-fy">
+              <option selected>December 31</option>
+              <option>March 31</option>
+              <option>June 30</option>
+              <option>September 30</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Assigned to</label>
+            <select>
+              <option>Sarah K. — Sr. Bookkeeper</option>
+              <option>Marcus T. — Controller</option>
+              <option selected>Jennifer L. — Managing Partner</option>
+            </select>
+          </div>
+          <div class="field full">
+            <label>Notes <span style="font-weight:400;color:var(--slate-400)">(optional)</span></label>
+            <input type="text" placeholder="e.g. Migrating from Bench, prefers Accrual basis" />
+            <span class="hint">Visible to the whole team. Used by AI for context.</span>
+          </div>
+        </div>
+        <div class="nav-btns">
+          <button class="btn-next" onclick="goStep(2)">Continue →</button>
+          <span class="btn-skip" onclick="goStep(2)">Skip for now</span>
+        </div>
+      </div>
+
+      <!-- ── Step 2: Connect Sources ── -->
+      <div class="step-panel" id="panel-2">
+        <div class="s-head">
+          <h1>Connect data sources</h1>
+          <p>Connect the places where this client's money moves. More connections = better pattern detection.</p>
+        </div>
+
+        <div class="source-section">
+          <div class="source-section-title">Banking</div>
+          <div class="source-grid">
+            <div class="source-card connected">
+              <div class="source-logo" style="background:#003087;color:white">CH</div>
+              <div class="source-info">
+                <div class="source-name">Chase Bank</div>
+                <div class="source-status">2 accounts connected</div>
+              </div>
+              <div class="source-check"><svg width="9" height="9" fill="none" stroke="white" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg></div>
+            </div>
+            <div class="source-card">
+              <div class="source-logo" style="background:#d71e28;color:white">WF</div>
+              <div class="source-info">
+                <div class="source-name">Wells Fargo</div>
+                <div class="source-status">Click to connect</div>
+              </div>
+              <div class="source-plus"><svg width="9" height="9" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg></div>
+            </div>
+            <div class="source-card">
+              <div class="source-logo" style="background:#1a1a2e;color:white">MX</div>
+              <div class="source-info">
+                <div class="source-name">Mercury</div>
+                <div class="source-status">Click to connect</div>
+              </div>
+              <div class="source-plus"><svg width="9" height="9" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="source-section">
+          <div class="source-section-title">Accounting software</div>
+          <div class="source-grid">
+            <div class="source-card connected">
+              <div class="source-logo" style="background:#2ca01c;color:white">QB</div>
+              <div class="source-info">
+                <div class="source-name">QuickBooks Online</div>
+                <div class="source-status">COA + history synced</div>
+              </div>
+              <div class="source-check"><svg width="9" height="9" fill="none" stroke="white" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg></div>
+            </div>
+            <div class="source-card">
+              <div class="source-logo" style="background:#1ab4d7;color:white">XR</div>
+              <div class="source-info">
+                <div class="source-name">Xero</div>
+                <div class="source-status">Click to connect</div>
+              </div>
+              <div class="source-plus"><svg width="9" height="9" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="source-section">
+          <div class="source-section-title">Payroll</div>
+          <div class="source-grid">
+            <div class="source-card connected">
+              <div class="source-logo" style="background:#f5a623;color:white">GU</div>
+              <div class="source-info">
+                <div class="source-name">Gusto</div>
+                <div class="source-status">Payroll runs synced</div>
+              </div>
+              <div class="source-check"><svg width="9" height="9" fill="none" stroke="white" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg></div>
+            </div>
+            <div class="source-card">
+              <div class="source-logo" style="background:#e53935;color:white">RP</div>
+              <div class="source-info">
+                <div class="source-name">Rippling</div>
+                <div class="source-status">Click to connect</div>
+              </div>
+              <div class="source-plus"><svg width="9" height="9" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="source-section">
+          <div class="source-section-title">Payments &amp; e-commerce</div>
+          <div class="source-grid">
+            <div class="source-card connected">
+              <div class="source-logo" style="background:#635bff;color:white">ST</div>
+              <div class="source-info">
+                <div class="source-name">Stripe</div>
+                <div class="source-status">Payouts + fees synced</div>
+              </div>
+              <div class="source-check"><svg width="9" height="9" fill="none" stroke="white" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg></div>
+            </div>
+            <div class="source-card">
+              <div class="source-logo" style="background:#96bf48;color:white">SH</div>
+              <div class="source-info">
+                <div class="source-name">Shopify</div>
+                <div class="source-status">Click to connect</div>
+              </div>
+              <div class="source-plus"><svg width="9" height="9" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg></div>
+            </div>
+            <div class="source-card">
+              <div class="source-logo" style="background:#3e4348;color:white">SQ</div>
+              <div class="source-info">
+                <div class="source-name">Square</div>
+                <div class="source-status">Click to connect</div>
+              </div>
+              <div class="source-plus"><svg width="9" height="9" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="nav-btns">
+          <button class="btn-back" onclick="goStep(1)">← Back</button>
+          <button class="btn-next" onclick="goStep(3)">Analyse history →</button>
+        </div>
+      </div>
+
+      <!-- ── Step 3: Discover Patterns ── -->
+      <div class="step-panel" id="panel-3">
+        <div class="s-head">
+          <h1>Discovering patterns</h1>
+          <p>Atlas is reading 18 months of transaction history across your connected sources to learn this client's money patterns before running any workflow.</p>
+        </div>
+
+        <div class="analysis-card">
+          <div class="analysis-header">
+            <div>
+              <div class="analysis-title" id="analysis-title">Analysing…</div>
+            </div>
+            <div class="analysis-prog-wrap">
+              <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+                <span></span>
+                <span class="analysis-pct" id="analysis-pct">0%</span>
+              </div>
+              <div class="analysis-prog-bar">
+                <div class="analysis-prog-fill" id="analysis-fill" style="width:0%"></div>
+              </div>
+            </div>
+          </div>
+          <div class="analysis-log" id="analysis-log"></div>
+          <div class="analysis-summary" id="analysis-summary">
+            <div class="as-stat"><div class="as-val">2,841</div><div class="as-key">transactions read</div></div>
+            <div class="as-stat"><div class="as-val">14</div><div class="as-key">rules ready</div></div>
+            <div class="as-stat"><div class="as-val">6</div><div class="as-key">vendor groups</div></div>
+            <div class="as-stat"><div class="as-val">3</div><div class="as-key">need your input</div></div>
+          </div>
+        </div>
+
+        <div class="nav-btns" id="step3-nav" style="display:none">
+          <button class="btn-back" onclick="goStep(2)">← Back</button>
+          <button class="btn-next" onclick="goStep(4)">Review rules →</button>
+        </div>
+      </div>
+
+      <!-- ── Step 4: Review Rules ── -->
+      <div class="step-panel" id="panel-4">
+        <div class="s-head">
+          <h1>Review suggested rules</h1>
+          <p>Atlas found these patterns in 18 months of history. Accept the ones that look right — you can always edit or add more later.</p>
+        </div>
+
+        <div class="rules-meta">
+          <span class="rules-count-badge"><strong id="accepted-count">0</strong> of 11 accepted</span>
+          <div class="rule-filter-tabs">
+            <div class="rtab active" onclick="filterRules('all', this)">All <span class="rc">14</span></div>
+            <div class="rtab" onclick="filterRules('ready', this)">Ready to activate <span class="rc">11</span></div>
+            <div class="rtab" onclick="filterRules('input', this)">Needs your input <span class="rc">3</span></div>
+          </div>
+        </div>
+
+        <div class="rules-list">
+
+          <!-- Rule 1: Transfer — high confidence -->
+          <div class="rule-card" id="rule-1" data-type="ready">
+            <div class="rule-icon" style="background:var(--indigo-50)">
+              <svg width="14" height="14" fill="none" stroke="#4f46e5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+            </div>
+            <div class="rule-body">
+              <div class="rule-top">
+                <div class="rule-trigger">Transfers between Chase #4521 ↔ Chase #8834</div>
+                <span class="rule-conf conf-high">98% match</span>
+              </div>
+              <div class="rule-desc">Found 47 matching transfers over 18 months. Same-day amounts within $0.01, alternating direction.</div>
+              <div class="rule-routing">
+                <span class="r-from">Description contains "TRANSFER"</span>
+                <span class="r-arrow">→</span>
+                <span class="r-to">Route as Transfer</span>
+              </div>
+            </div>
+            <div class="rule-actions" id="ra-1">
+              <button class="rule-btn accept" onclick="acceptRule(1)">Accept</button>
+              <button class="rule-btn edit">Edit</button>
+              <button class="rule-btn dismiss" onclick="dismissRule(1)">✕</button>
+            </div>
+          </div>
+
+          <!-- Rule 2: Stripe income split — high confidence -->
+          <div class="rule-card" id="rule-2" data-type="ready">
+            <div class="rule-icon" style="background:#ede9fe">
+              <svg width="14" height="14" fill="none" stroke="#7c3aed" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+            </div>
+            <div class="rule-body">
+              <div class="rule-top">
+                <div class="rule-trigger">Stripe payouts (STRIPE TRANSFER)</div>
+                <span class="rule-conf conf-high">96% match</span>
+              </div>
+              <div class="rule-desc">24 Stripe settlement deposits detected. Consistent split: charges, refunds, and processing fees bundled together.</div>
+              <div class="rule-routing">
+                <span class="r-from">STRIPE TRANSFER</span>
+                <span class="r-arrow">→</span>
+                <span class="r-to">Split: Revenue / Refunds / Stripe Fees</span>
+              </div>
+            </div>
+            <div class="rule-actions" id="ra-2">
+              <button class="rule-btn accept" onclick="acceptRule(2)">Accept</button>
+              <button class="rule-btn edit">Edit</button>
+              <button class="rule-btn dismiss" onclick="dismissRule(2)">✕</button>
+            </div>
+          </div>
+
+          <!-- Rule 3: Payroll — high confidence -->
+          <div class="rule-card" id="rule-3" data-type="ready">
+            <div class="rule-icon" style="background:var(--green-50)">
+              <svg width="14" height="14" fill="none" stroke="#16a34a" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            </div>
+            <div class="rule-body">
+              <div class="rule-top">
+                <div class="rule-trigger">Gusto payroll runs (GUSTO • PAYROLL)</div>
+                <span class="rule-conf conf-high">99% match</span>
+              </div>
+              <div class="rule-desc">18 bi-monthly payroll runs identified. All originate from Gusto and hit on the 1st and 15th.</div>
+              <div class="rule-routing">
+                <span class="r-from">GUSTO • PAYROLL</span>
+                <span class="r-arrow">→</span>
+                <span class="r-to">Payroll Expense</span>
+              </div>
+            </div>
+            <div class="rule-actions" id="ra-3">
+              <button class="rule-btn accept" onclick="acceptRule(3)">Accept</button>
+              <button class="rule-btn edit">Edit</button>
+              <button class="rule-btn dismiss" onclick="dismissRule(3)">✕</button>
+            </div>
+          </div>
+
+          <!-- Rule 4: AWS — medium confidence -->
+          <div class="rule-card" id="rule-4" data-type="ready">
+            <div class="rule-icon" style="background:#fff7ed">
+              <svg width="14" height="14" fill="none" stroke="#ea580c" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"/></svg>
+            </div>
+            <div class="rule-body">
+              <div class="rule-top">
+                <div class="rule-trigger">AWS recurring charges (Amazon Web Services)</div>
+                <span class="rule-conf conf-medium">87% match</span>
+              </div>
+              <div class="rule-desc">Monthly AWS invoices, varying amount. Classified as software in QuickBooks history.</div>
+              <div class="rule-routing">
+                <span class="r-from">AMAZON WEB SERVICES</span>
+                <span class="r-arrow">→</span>
+                <span class="r-to">Software &amp; Subscriptions</span>
+              </div>
+            </div>
+            <div class="rule-actions" id="ra-4">
+              <button class="rule-btn accept" onclick="acceptRule(4)">Accept</button>
+              <button class="rule-btn edit">Edit</button>
+              <button class="rule-btn dismiss" onclick="dismissRule(4)">✕</button>
+            </div>
+          </div>
+
+          <!-- Rule 5: Rent — high confidence -->
+          <div class="rule-card" id="rule-5" data-type="ready">
+            <div class="rule-icon" style="background:var(--blue-50)">
+              <svg width="14" height="14" fill="none" stroke="#2563eb" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+            </div>
+            <div class="rule-body">
+              <div class="rule-top">
+                <div class="rule-trigger">Monthly office rent (WPROP MANAGEMENT)</div>
+                <span class="rule-conf conf-high">94% match</span>
+              </div>
+              <div class="rule-desc">Fixed $8,400/mo ACH on the 1st. 18 consecutive months, same payee and amount.</div>
+              <div class="rule-routing">
+                <span class="r-from">WPROP MANAGEMENT</span>
+                <span class="r-arrow">→</span>
+                <span class="r-to">Rent &amp; Lease Expense</span>
+              </div>
+            </div>
+            <div class="rule-actions" id="ra-5">
+              <button class="rule-btn accept" onclick="acceptRule(5)">Accept</button>
+              <button class="rule-btn edit">Edit</button>
+              <button class="rule-btn dismiss" onclick="dismissRule(5)">✕</button>
+            </div>
+          </div>
+
+          <!-- Rule 6: needs input — ambiguous credit -->
+          <div class="rule-card rule-needs-input" id="rule-6" data-type="input">
+            <div class="rule-icon" style="background:var(--amber-50)">
+              <svg width="14" height="14" fill="none" stroke="#d97706" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+            <div class="rule-body">
+              <div class="rule-top">
+                <div class="rule-trigger">Recurring credit: "MISC CREDIT 4421"</div>
+                <span class="rule-conf conf-low">34% confidence</span>
+              </div>
+              <div class="rule-desc">$2,200–$3,400 deposits, 11 occurrences. Could be consulting revenue, a loan drawdown, or an owner contribution. Atlas can't tell.</div>
+              <div class="rule-routing" style="align-items:center">
+                <span class="r-from">MISC CREDIT 4421</span>
+                <span class="r-arrow">→</span>
+                <select class="select-coa">
+                  <option value="">— Choose account —</option>
+                  <option>Consulting Revenue</option>
+                  <option>Loan Proceeds</option>
+                  <option>Owner Contribution</option>
+                  <option>Other Income</option>
+                </select>
+              </div>
+            </div>
+            <div class="rule-actions" id="ra-6">
+              <button class="rule-btn accept" onclick="acceptRule(6)">Assign &amp; save</button>
+            </div>
+          </div>
+
+          <!-- Rule 7: needs input — split unclear -->
+          <div class="rule-card rule-needs-input" id="rule-7" data-type="input">
+            <div class="rule-icon" style="background:var(--amber-50)">
+              <svg width="14" height="14" fill="none" stroke="#d97706" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+            <div class="rule-body">
+              <div class="rule-top">
+                <div class="rule-trigger">AMEX card payments (AMEX EPAYMENT)</div>
+                <span class="rule-conf conf-low">52% confidence</span>
+              </div>
+              <div class="rule-desc">14 credit card payments to Amex. Atlas isn't sure whether to treat these as a single expense or a clearing account transfer.</div>
+              <div class="rule-routing" style="align-items:center">
+                <span class="r-from">AMEX EPAYMENT</span>
+                <span class="r-arrow">→</span>
+                <select class="select-coa">
+                  <option value="">— Choose treatment —</option>
+                  <option>Credit Card Clearing (Transfer)</option>
+                  <option>Business Expenses (direct)</option>
+                </select>
+              </div>
+            </div>
+            <div class="rule-actions" id="ra-7">
+              <button class="rule-btn accept" onclick="acceptRule(7)">Assign &amp; save</button>
+            </div>
+          </div>
+
+        </div><!-- rules-list -->
+
+        <div class="nav-btns">
+          <button class="btn-back" onclick="goStep(3)">← Back</button>
+          <button class="btn-next" onclick="goStep(5)" id="btn-launch">Continue to launch →</button>
+        </div>
+      </div>
+
+      <!-- ── Step 5: Launch ── -->
+      <div class="step-panel" id="panel-5">
+        <div class="s-head">
+          <h1>NovaTech Solutions is ready</h1>
+          <p>Everything's in place. Run the first workflow to let Atlas process the transaction backlog.</p>
+        </div>
+
+        <div class="launch-grid">
+          <div class="launch-card">
+            <div class="lc-icon" style="background:var(--green-50)">
+              <svg width="16" height="16" fill="none" stroke="#16a34a" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"/></svg>
+            </div>
+            <div class="lc-val">4</div>
+            <div class="lc-key">sources connected</div>
+          </div>
+          <div class="launch-card">
+            <div class="lc-icon" style="background:var(--indigo-50)">
+              <svg width="16" height="16" fill="none" stroke="#4f46e5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+            </div>
+            <div class="lc-val" id="launch-rules">—</div>
+            <div class="lc-key">rules activated</div>
+          </div>
+          <div class="launch-card">
+            <div class="lc-icon" style="background:var(--amber-50)">
+              <svg width="16" height="16" fill="none" stroke="#d97706" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+            <div class="lc-val">18 mo</div>
+            <div class="lc-key">history available</div>
+          </div>
+          <div class="launch-card">
+            <div class="lc-icon" style="background:var(--violet-100)">
+              <svg width="16" height="16" fill="none" stroke="#7c3aed" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+            </div>
+            <div class="lc-val">2,841</div>
+            <div class="lc-key">transactions to process</div>
+          </div>
+        </div>
+
+        <div class="launch-cta">
+          <div>
+            <svg width="20" height="20" fill="none" stroke="#4f46e5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          </div>
+          <div class="launch-cta-text">
+            <h3>Quarterly Close — Q1 2025</h3>
+            <p>Atlas will classify 2,841 transactions using your <span id="cta-rules">—</span> rules, then surface items needing your review.</p>
+          </div>
+          <div class="launch-cta-btns">
+            <button class="btn-back" style="font-size:12px">Schedule</button>
+            <button class="btn-next green" onclick="window.location.href='workflow-live.html'">Run now →</button>
+          </div>
+        </div>
+
+        <div class="nav-btns">
+          <button class="btn-back" onclick="goStep(4)">← Back</button>
+          <a href="agent-hub.html" style="text-decoration:none">
+            <button class="btn-back" style="font-size:12px">Save &amp; exit</button>
+          </a>
+        </div>
+      </div>
+
+    </div><!-- .content -->
+  </div><!-- .body -->
+</div><!-- .main -->
+
+<script>
+// ── State ──────────────────────────────────────────────────────
+let currentStep = 1;
+let acceptedRules = new Set();
+const TOTAL_STEPS = 5;
+
+// ── Step navigation ────────────────────────────────────────────
+function goStep(n) {
+  if (n < 1 || n > TOTAL_STEPS) return;
+
+  // hide current panel
+  document.getElementById('panel-' + currentStep).classList.remove('visible');
+
+  currentStep = n;
+
+  // show new panel
+  document.getElementById('panel-' + currentStep).classList.add('visible');
+
+  // update topbar counter
+  document.getElementById('step-num').textContent = currentStep;
+
+  // update sidebar step items
+  for (let i = 1; i <= TOTAL_STEPS; i++) {
+    const si = document.getElementById('si-' + i);
+    const sd = document.getElementById('sd-' + i);
+    si.classList.remove('active', 'done');
+    if (i < currentStep) {
+      si.classList.add('done');
+      sd.innerHTML = '<svg width="9" height="9" fill="none" stroke="white" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>';
+    } else if (i === currentStep) {
+      si.classList.add('active');
+      sd.textContent = i;
+    } else {
+      sd.textContent = i;
+    }
+  }
+
+  // update sidebar subtitles
+  if (currentStep >= 2) {
+    document.getElementById('ss-1').textContent = document.getElementById('f-name').value || 'Done';
+  }
+  if (currentStep >= 4) {
+    document.getElementById('ss-3').textContent = '14 patterns found';
+  }
+
+  // show client summary from step 2 onwards
+  if (currentStep >= 2) {
+    updateClientSummary();
+    document.getElementById('client-summary').classList.add('visible');
+  }
+
+  // trigger analysis animation on step 3
+  if (currentStep === 3) {
+    startAnalysis();
+  }
+
+  // update launch screen rule count
+  if (currentStep === 5) {
+    const n = acceptedRules.size;
+    document.getElementById('launch-rules').textContent = n > 0 ? n : '—';
+    document.getElementById('cta-rules').textContent = n > 0 ? n + ' activated' : '0 activated';
+  }
+}
+
+function updateClientSummary() {
+  const name = document.getElementById('f-name').value || 'New Client';
+  const entity = document.getElementById('f-entity').value;
+  const fy = document.getElementById('f-fy').value;
+  document.getElementById('cs-name').textContent = name;
+  document.getElementById('cs-meta').textContent = entity + ' · FY ' + fy;
+
+  const sources = document.getElementById('cs-sources');
+  if (currentStep >= 3) {
+    sources.innerHTML = ['Chase','QuickBooks','Gusto','Stripe'].map(s =>
+      `<span class="cs-src">${s}</span>`).join('');
+  }
+}
+
+// ── Analysis animation ─────────────────────────────────────────
+let analysisStarted = false;
+function startAnalysis() {
+  if (analysisStarted) return;
+  analysisStarted = true;
+
+  const logEl = document.getElementById('analysis-log');
+  const fillEl = document.getElementById('analysis-fill');
+  const pctEl  = document.getElementById('analysis-pct');
+  const titleEl = document.getElementById('analysis-title');
+
+  const entries = [
+    { cat: 'SOURCES', msg: 'Reading <span class="hl">18 months</span> of transaction history…',          pct: 5  },
+    { cat: 'CHASE',   msg: '<span class="ok">✓</span> <span class="hl">1,184</span> transactions loaded', pct: 20 },
+    { cat: 'QBO',     msg: '<span class="ok">✓</span> Chart of accounts imported · <span class="hl">87</span> accounts', pct: 30 },
+    { cat: 'GUSTO',   msg: '<span class="ok">✓</span> <span class="hl">36</span> payroll runs loaded', pct: 38 },
+    { cat: 'STRIPE',  msg: '<span class="ok">✓</span> <span class="hl">621</span> payment events loaded', pct: 48 },
+    { sep: true },
+    { cat: 'PATTERN', msg: 'Detecting recurring vendors…', pct: 52 },
+    { cat: 'PATTERN', msg: 'Found <span class="hl">23 recurring vendors</span> · 6 grouped by category', pct: 58 },
+    { cat: 'PATTERN', msg: 'Detecting transfer pairs…', pct: 62 },
+    { cat: 'PATTERN', msg: 'Found <span class="hl">2 account transfer patterns</span>', pct: 66 },
+    { sep: true },
+    { cat: 'RULES',   msg: 'Generating rule candidates…', pct: 72 },
+    { cat: 'RULES',   msg: '<span class="hl">11 high-confidence</span> rules ready to activate', pct: 82 },
+    { cat: 'RULES',   msg: '<span class="ok">✓</span> 5 rules matched to existing QuickBooks categories', pct: 88 },
+    { sep: true },
+    { cat: 'REVIEW',  msg: '<span class="hl">3 patterns</span> flagged — need your input before activating', pct: 96 },
+    { cat: 'DONE',    msg: 'Analysis complete · <span class="hl">14 rules ready for review</span>', pct: 100, done: true },
+  ];
+
+  let delay = 400;
+  entries.forEach(e => {
+    delay += e.sep ? 300 : 700;
+    const t = delay;
+    setTimeout(() => {
+      if (e.sep) {
+        const sep = document.createElement('div');
+        sep.className = 'al-sep';
+        sep.textContent = '─────────────────────────';
+        logEl.appendChild(sep);
+      } else {
+        const row = document.createElement('div');
+        row.className = 'al-entry';
+        row.innerHTML = `<span class="al-cat">${e.cat}</span><span class="al-msg">${e.msg}</span>`;
+        logEl.appendChild(row);
+        fillEl.style.width = e.pct + '%';
+        pctEl.textContent  = e.pct + '%';
+        if (e.done) {
+          titleEl.textContent = 'Analysis complete';
+          document.getElementById('analysis-summary').classList.add('visible');
+          document.getElementById('step3-nav').style.display = 'flex';
+          document.getElementById('ss-3').textContent = '14 patterns found';
+        }
+      }
+      logEl.scrollTop = logEl.scrollHeight;
+    }, t);
+  });
+}
+
+// ── Rule accept/dismiss ─────────────────────────────────────────
+function acceptRule(id) {
+  const card = document.getElementById('rule-' + id);
+  const actions = document.getElementById('ra-' + id);
+  card.classList.add('accepted');
+  card.classList.remove('rule-needs-input');
+  actions.innerHTML = '<span class="rule-btn accepted-state">✓ Accepted</span>';
+  acceptedRules.add(id);
+  document.getElementById('accepted-count').textContent = acceptedRules.size;
+}
+
+function dismissRule(id) {
+  document.getElementById('rule-' + id).classList.add('dismissed');
+}
+
+function filterRules(type, el) {
+  document.querySelectorAll('.rtab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.querySelectorAll('.rule-card').forEach(card => {
+    if (type === 'all') {
+      card.style.display = '';
+    } else if (type === 'ready') {
+      card.style.display = card.dataset.type === 'ready' ? '' : 'none';
+    } else {
+      card.style.display = card.dataset.type === 'input' ? '' : 'none';
+    }
+  });
+}
+</script>
+
+</body>
+</html>
