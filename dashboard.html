@@ -338,6 +338,84 @@
   .pag-info { font-size: 12px; color: var(--slate-400); }
   .pag-btns { display: flex; gap: 6px; }
 
+  /* ── Kanban board ── */
+  .kanban-wrap {
+    overflow-x: auto;
+    padding: 16px 20px 20px;
+  }
+  .kanban-board {
+    display: flex; gap: 12px;
+    min-width: max-content;
+  }
+  .kanban-col {
+    width: 196px; flex-shrink: 0;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .kanban-col-header {
+    display: flex; align-items: center; gap: 6px;
+    padding: 6px 4px 8px;
+  }
+  .kanban-col-name {
+    font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .06em;
+    color: var(--slate-500); flex: 1;
+  }
+  .kanban-col-count {
+    font-size: 11px; font-weight: 700;
+    background: var(--slate-100); color: var(--slate-400);
+    padding: 1px 7px; border-radius: 9999px;
+  }
+  .kanban-col.col-done .kanban-col-name { color: #15803d; }
+  .kanban-col.col-done .kanban-col-count { background: #f0fdf4; color: #15803d; }
+  .kanban-col-line {
+    height: 3px; border-radius: 9999px;
+    background: var(--slate-200); margin-bottom: 4px;
+  }
+  .kanban-col.col-done .kanban-col-line { background: #22c55e; }
+  .kanban-col.col-active .kanban-col-line { background: var(--primary); }
+  .kcard {
+    background: white;
+    border: 1px solid var(--slate-200);
+    border-radius: 10px;
+    padding: 12px;
+    cursor: pointer;
+    transition: box-shadow .15s, border-color .15s;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .kcard:hover { box-shadow: var(--shadow-md); border-color: var(--slate-300); }
+  .kcard.kcard-blocked { border-left: 3px solid var(--danger-text); }
+  .kcard.kcard-risk    { border-left: 3px solid var(--warning-text); }
+  .kcard.kcard-done    { background: #f0fdf4; border-color: #bbf7d0; opacity: .9; }
+  .kcard-client { font-size: 13px; font-weight: 700; color: var(--slate-900); line-height: 1.3; }
+  .kcard-period { font-size: 11px; color: var(--slate-400); margin-top: 1px; }
+  .kcard-footer { display: flex; align-items: center; gap: 6px; margin-top: 2px; }
+  .kcard-avatar {
+    width: 20px; height: 20px; border-radius: 50%;
+    background: linear-gradient(135deg, #818cf8, var(--primary));
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-size: 9px; font-weight: 700; flex-shrink: 0;
+  }
+  .kcard-owner { font-size: 11px; color: var(--slate-500); flex: 1; }
+  .kcard-deadline {
+    font-size: 10px; font-weight: 600;
+    padding: 2px 6px; border-radius: 4px;
+    white-space: nowrap;
+  }
+  .kcard-deadline.dl-ok   { background: var(--slate-100); color: var(--slate-500); }
+  .kcard-deadline.dl-near { background: var(--warning-bg); color: var(--warning-text); }
+  .kcard-deadline.dl-crit { background: var(--danger-bg);  color: var(--danger-text); }
+  .kcard-tag {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 10px; font-weight: 700;
+    padding: 2px 6px; border-radius: 4px;
+    background: var(--danger-bg); color: var(--danger-text);
+  }
+  .kanban-empty {
+    border: 1px dashed var(--slate-200);
+    border-radius: 10px; padding: 20px 12px;
+    text-align: center; font-size: 11px; color: var(--slate-300);
+  }
+
   /* ── Analytics specific ── */
   .analytics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
   .analytics-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
@@ -512,113 +590,285 @@
           </div>
         </div>
 
-        <!-- Portfolio -->
+        <!-- Book Close Kanban -->
         <div class="section">
           <div class="section-header">
-            <div class="scope-toggle">
-              <button class="scope-btn active" onclick="switchScope(this,'all')">All <span class="scope-count">18</span></button>
-              <button class="scope-btn" onclick="switchScope(this,'mine')">Mine <span class="scope-count">2</span></button>
+            <span class="section-title">Book Close</span>
+            <span class="section-count">7 active</span>
+            <span style="font-size:12px;color:var(--slate-400);margin-left:auto;">Q1 2026 cycle</span>
+            <a href="projects-list.html" style="font-size:12px;color:var(--primary);font-weight:600;text-decoration:none;">View all →</a>
+          </div>
+          <div class="kanban-wrap">
+            <div class="kanban-board">
+
+              <!-- Col 1: Doc Collection -->
+              <div class="kanban-col">
+                <div class="kanban-col-header">
+                  <span class="kanban-col-name">Doc Collection</span>
+                  <span class="kanban-col-count">2</span>
+                </div>
+                <div class="kanban-col-line"></div>
+                <div class="kcard kcard-blocked" onclick="window.location.href='project-detail.html'">
+                  <div>
+                    <div class="kcard-client">Bridgewater LLC</div>
+                    <div class="kcard-period">Q1 2026</div>
+                  </div>
+                  <div style="display:flex;gap:4px;flex-wrap:wrap">
+                    <span class="kcard-tag">⛔ Blocked</span>
+                  </div>
+                  <div class="kcard-footer">
+                    <div class="kcard-avatar" style="background:linear-gradient(135deg,#34d399,#059669)">JK</div>
+                    <span class="kcard-owner">James K.</span>
+                    <span class="kcard-deadline dl-crit">Apr 25</span>
+                  </div>
+                </div>
+                <div class="kcard" onclick="window.location.href='project-detail.html'">
+                  <div>
+                    <div class="kcard-client">Clearwater Clinic</div>
+                    <div class="kcard-period">Q1 2026</div>
+                  </div>
+                  <div class="kcard-footer">
+                    <div class="kcard-avatar" style="background:linear-gradient(135deg,#fb923c,#ea580c)">MT</div>
+                    <span class="kcard-owner">Marcus T.</span>
+                    <span class="kcard-deadline dl-near">May 5</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Col 2: Bookkeeping -->
+              <div class="kanban-col col-active">
+                <div class="kanban-col-header">
+                  <span class="kanban-col-name">Bookkeeping</span>
+                  <span class="kanban-col-count">2</span>
+                </div>
+                <div class="kanban-col-line"></div>
+                <div class="kcard" onclick="window.location.href='project-detail.html'">
+                  <div>
+                    <div class="kcard-client">Sunrise Capital</div>
+                    <div class="kcard-period">Q1 2026</div>
+                  </div>
+                  <div class="kcard-footer">
+                    <div class="kcard-avatar" style="background:linear-gradient(135deg,#a78bfa,#7c3aed)">AL</div>
+                    <span class="kcard-owner">Alex L.</span>
+                    <span class="kcard-deadline dl-ok">May 10</span>
+                  </div>
+                </div>
+                <div class="kcard kcard-risk" onclick="window.location.href='project-detail.html'">
+                  <div>
+                    <div class="kcard-client">Peak Athletics</div>
+                    <div class="kcard-period">Q1 2026</div>
+                  </div>
+                  <div class="kcard-footer">
+                    <div class="kcard-avatar">SM</div>
+                    <span class="kcard-owner">Sarah M.</span>
+                    <span class="kcard-deadline dl-near">Apr 29</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Col 3: Bookkeeper Review -->
+              <div class="kanban-col">
+                <div class="kanban-col-header">
+                  <span class="kanban-col-name">Bookkeeper Review</span>
+                  <span class="kanban-col-count">1</span>
+                </div>
+                <div class="kanban-col-line"></div>
+                <div class="kcard" onclick="window.location.href='project-detail.html'">
+                  <div>
+                    <div class="kcard-client">Harbor & Cole LLP</div>
+                    <div class="kcard-period">Mar 2025</div>
+                  </div>
+                  <div class="kcard-footer">
+                    <div class="kcard-avatar" style="background:linear-gradient(135deg,#fb923c,#ea580c)">MT</div>
+                    <span class="kcard-owner">Marcus T.</span>
+                    <span class="kcard-deadline dl-ok">May 15</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Col 4: Adjusting Entries -->
+              <div class="kanban-col">
+                <div class="kanban-col-header">
+                  <span class="kanban-col-name">Adjusting Entries</span>
+                  <span class="kanban-col-count">0</span>
+                </div>
+                <div class="kanban-col-line"></div>
+                <div class="kanban-empty">No projects here</div>
+              </div>
+
+              <!-- Col 5: Controller Review -->
+              <div class="kanban-col col-active">
+                <div class="kanban-col-header">
+                  <span class="kanban-col-name">Controller Review</span>
+                  <span class="kanban-col-count">1</span>
+                </div>
+                <div class="kanban-col-line"></div>
+                <div class="kcard" onclick="window.location.href='project-detail.html'">
+                  <div>
+                    <div class="kcard-client">Bright &amp; Bloom LLC</div>
+                    <div class="kcard-period">Q1 2025</div>
+                  </div>
+                  <div style="display:flex;gap:4px">
+                    <span class="kcard-tag" style="background:#fef9c3;color:#854d0e;">⏳ Awaiting</span>
+                  </div>
+                  <div class="kcard-footer">
+                    <div class="kcard-avatar" style="background:linear-gradient(135deg,#6366f1,#4f46e5)">MT</div>
+                    <span class="kcard-owner">Marcus T.</span>
+                    <span class="kcard-deadline dl-near">Apr 30</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Col 6: Signed Off -->
+              <div class="kanban-col col-done">
+                <div class="kanban-col-header">
+                  <span class="kanban-col-name">Signed Off ✓</span>
+                  <span class="kanban-col-count">1</span>
+                </div>
+                <div class="kanban-col-line"></div>
+                <div class="kcard kcard-done" onclick="window.location.href='project-detail.html'">
+                  <div>
+                    <div class="kcard-client">Stellar Dynamics</div>
+                    <div class="kcard-period">Q4 2025</div>
+                  </div>
+                  <div class="kcard-footer">
+                    <div class="kcard-avatar" style="background:linear-gradient(135deg,#a78bfa,#7c3aed)">AL</div>
+                    <span class="kcard-owner">Alex L.</span>
+                    <span class="kcard-deadline dl-ok">Done</span>
+                  </div>
+                </div>
+              </div>
+
             </div>
           </div>
-          <div class="filter-bar">
-            <div class="search-wrap">
-              <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
-              <input class="search-input" type="text" placeholder="Search projects or clients…" />
-            </div>
-            <button class="filter-chip active">All</button>
-            <button class="filter-chip">Tax Prep</button>
-            <button class="filter-chip">Book Close</button>
-            <button class="filter-chip">Audit</button>
-            <div class="filter-spacer"></div>
-            <select class="filter-select"><option>All clients</option><option>Acme Corp</option><option>Bridgewater LLC</option><option>NovaTech Inc</option></select>
-            <select class="filter-select"><option>All statuses</option><option>In Progress</option><option>At Risk</option><option>Complete</option></select>
+        </div>
+
+        <!-- Tax Prep Kanban -->
+        <div class="section">
+          <div class="section-header">
+            <span class="section-title">Tax Prep</span>
+            <span class="section-count">6 active</span>
+            <span style="font-size:12px;color:var(--slate-400);margin-left:auto;">FY 2025 season</span>
+            <a href="projects-list.html" style="font-size:12px;color:var(--primary);font-weight:600;text-decoration:none;">View all →</a>
           </div>
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Project</th><th>Client</th><th>Type</th><th>Period</th>
-                  <th>Deadline</th><th>Doc Progress</th><th>Risk</th><th>Owner</th><th>Status</th>
-                </tr>
-              </thead>
-              <tbody id="dash-portfolio-tbody">
-                <tr data-owner="sm">
-                  <td><div class="cell-link">Tax Prep 2025</div><div class="cell-secondary">Created Mar 12</div></td>
-                  <td><div class="cell-primary">Acme Corp</div></td>
-                  <td><span class="badge badge-primary">Tax Prep</span></td>
-                  <td><div style="font-size:12px;color:var(--slate-600)">FY 2025</div></td>
-                  <td><div class="deadline-near">Apr 30, 2026</div><div class="nudge nudge-alert">⚠ 8 days left</div></td>
-                  <td><div class="prog-wrap"><div class="prog-bar"><div class="prog-fill prog-fill-amber" style="width:55%"></div></div><span class="prog-label">6/11</span></div></td>
-                  <td><span class="risk risk-high">⬤ High</span></td>
-                  <td><div class="owner"><div class="avatar avatar-sm">SM</div><span class="owner-name">Sarah M.</span></div></td>
-                  <td><span class="badge badge-warning"><span class="badge-dot"></span>In Review</span></td>
-                </tr>
-                <tr data-owner="jk">
-                  <td><div class="cell-link">Book Close Q1 2026</div><div class="cell-secondary">Created Apr 1</div></td>
-                  <td><div class="cell-primary">Bridgewater LLC</div></td>
-                  <td><span class="badge badge-neutral">Book Close</span></td>
-                  <td><div style="font-size:12px;color:var(--slate-600)">Q1 2026</div></td>
-                  <td><div class="deadline-near">Apr 25, 2026</div><div class="nudge nudge-alert">⚠ 3 days left</div></td>
-                  <td><div class="prog-wrap"><div class="prog-bar"><div class="prog-fill prog-fill-red" style="width:30%"></div></div><span class="prog-label">3/10</span></div></td>
-                  <td><span class="risk risk-high">⬤ High</span></td>
-                  <td><div class="owner"><div class="avatar avatar-sm" style="background:linear-gradient(135deg,#34d399,#059669)">JK</div><span class="owner-name">James K.</span></div></td>
-                  <td><span class="badge badge-danger"><span class="badge-dot"></span>Blocked</span></td>
-                </tr>
-                <tr data-owner="pr">
-                  <td><div class="cell-link">Tax Prep 2025</div><div class="cell-secondary">Created Feb 20</div></td>
-                  <td><div class="cell-primary">NovaTech Inc</div></td>
-                  <td><span class="badge badge-primary">Tax Prep</span></td>
-                  <td><div style="font-size:12px;color:var(--slate-600)">FY 2025</div></td>
-                  <td><div class="deadline-ok">May 15, 2026</div><div class="nudge">23 days left</div></td>
-                  <td><div class="prog-wrap"><div class="prog-bar"><div class="prog-fill prog-fill-amber" style="width:70%"></div></div><span class="prog-label">7/10</span></div></td>
-                  <td><span class="risk risk-medium">⬤ Medium</span></td>
-                  <td><div class="owner"><div class="avatar avatar-sm" style="background:linear-gradient(135deg,#fb923c,#ea580c)">PR</div><span class="owner-name">Priya R.</span></div></td>
-                  <td><span class="badge badge-primary"><span class="badge-dot"></span>In Progress</span></td>
-                </tr>
-                <tr data-owner="sm">
-                  <td><div class="cell-link">Audit Prep 2025</div><div class="cell-secondary">Created Jan 15</div></td>
-                  <td><div class="cell-primary">Greenfield Partners</div></td>
-                  <td><span class="badge badge-blue">Audit</span></td>
-                  <td><div style="font-size:12px;color:var(--slate-600)">FY 2025</div></td>
-                  <td><div class="deadline-ok">Jun 1, 2026</div><div class="nudge">40 days left</div></td>
-                  <td><div class="prog-wrap"><div class="prog-bar"><div class="prog-fill prog-fill-green" style="width:88%"></div></div><span class="prog-label">15/17</span></div></td>
-                  <td><span class="risk risk-low">⬤ Low</span></td>
-                  <td><div class="owner"><div class="avatar avatar-sm">SM</div><span class="owner-name">Sarah M.</span></div></td>
-                  <td><span class="badge badge-primary"><span class="badge-dot"></span>In Progress</span></td>
-                </tr>
-                <tr data-owner="al">
-                  <td><div class="cell-link">Book Close Q4 2025</div><div class="cell-secondary">Created Dec 3</div></td>
-                  <td><div class="cell-primary">Stellar Dynamics</div></td>
-                  <td><span class="badge badge-neutral">Book Close</span></td>
-                  <td><div style="font-size:12px;color:var(--slate-600)">Q4 2025</div></td>
-                  <td><div class="deadline-ok">Apr 30, 2026</div><div class="nudge">8 days left</div></td>
-                  <td><div class="prog-wrap"><div class="prog-bar"><div class="prog-fill prog-fill-green" style="width:100%"></div></div><span class="prog-label">12/12</span></div></td>
-                  <td><span class="risk risk-low">⬤ Low</span></td>
-                  <td><div class="owner"><div class="avatar avatar-sm" style="background:linear-gradient(135deg,#a78bfa,#7c3aed)">AL</div><span class="owner-name">Alex L.</span></div></td>
-                  <td><span class="badge badge-success"><span class="badge-dot"></span>Complete</span></td>
-                </tr>
-                <tr data-owner="jk">
-                  <td><div class="cell-link">Tax Prep 2025</div><div class="cell-secondary">Created Mar 5</div></td>
-                  <td><div class="cell-primary">Harbor Ventures</div></td>
-                  <td><span class="badge badge-primary">Tax Prep</span></td>
-                  <td><div style="font-size:12px;color:var(--slate-600)">FY 2025</div></td>
-                  <td><div class="deadline-near">Apr 28, 2026</div><div class="nudge nudge-alert">⚠ 6 days left</div></td>
-                  <td><div class="prog-wrap"><div class="prog-bar"><div class="prog-fill prog-fill-amber" style="width:45%"></div></div><span class="prog-label">4/9</span></div></td>
-                  <td><span class="risk risk-high">⬤ High</span></td>
-                  <td><div class="owner"><div class="avatar avatar-sm" style="background:linear-gradient(135deg,#34d399,#059669)">JK</div><span class="owner-name">James K.</span></div></td>
-                  <td><span class="badge badge-warning"><span class="badge-dot"></span>In Review</span></td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          <div class="pagination">
-            <span class="pag-info" id="dash-pag-info">Showing 6 of 18 projects</span>
-            <div class="pag-btns">
-              <button class="btn btn-ghost" style="padding:5px 10px;font-size:12px;">← Prev</button>
-              <button class="btn btn-ghost" style="padding:5px 10px;font-size:12px;background:var(--primary-light);color:var(--primary)">1</button>
-              <button class="btn btn-ghost" style="padding:5px 10px;font-size:12px;">2</button>
-              <button class="btn btn-ghost" style="padding:5px 10px;font-size:12px;">3</button>
-              <button class="btn btn-ghost" style="padding:5px 10px;font-size:12px;">Next →</button>
+          <div class="kanban-wrap">
+            <div class="kanban-board">
+
+              <!-- Col 1: Doc Collection -->
+              <div class="kanban-col">
+                <div class="kanban-col-header">
+                  <span class="kanban-col-name">Doc Collection</span>
+                  <span class="kanban-col-count">1</span>
+                </div>
+                <div class="kanban-col-line"></div>
+                <div class="kcard kcard-blocked" onclick="window.location.href='project-detail.html'">
+                  <div>
+                    <div class="kcard-client">Harbor Ventures</div>
+                    <div class="kcard-period">FY 2025</div>
+                  </div>
+                  <div style="display:flex;gap:4px">
+                    <span class="kcard-tag">⛔ Blocked</span>
+                  </div>
+                  <div class="kcard-footer">
+                    <div class="kcard-avatar" style="background:linear-gradient(135deg,#34d399,#059669)">JK</div>
+                    <span class="kcard-owner">James K.</span>
+                    <span class="kcard-deadline dl-crit">Apr 28</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Col 2: AI Processing -->
+              <div class="kanban-col col-active">
+                <div class="kanban-col-header">
+                  <span class="kanban-col-name">AI Processing</span>
+                  <span class="kanban-col-count">2</span>
+                </div>
+                <div class="kanban-col-line"></div>
+                <div class="kcard" onclick="window.location.href='project-detail.html'">
+                  <div>
+                    <div class="kcard-client">NovaTech Inc</div>
+                    <div class="kcard-period">FY 2025</div>
+                  </div>
+                  <div class="kcard-footer">
+                    <div class="kcard-avatar" style="background:linear-gradient(135deg,#fb923c,#ea580c)">PR</div>
+                    <span class="kcard-owner">Priya R.</span>
+                    <span class="kcard-deadline dl-ok">May 15</span>
+                  </div>
+                </div>
+                <div class="kcard" onclick="window.location.href='project-detail.html'">
+                  <div>
+                    <div class="kcard-client">Apex Industries</div>
+                    <div class="kcard-period">FY 2025</div>
+                  </div>
+                  <div class="kcard-footer">
+                    <div class="kcard-avatar" style="background:linear-gradient(135deg,#fb923c,#ea580c)">PR</div>
+                    <span class="kcard-owner">Priya R.</span>
+                    <span class="kcard-deadline dl-ok">May 31</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Col 3: CPA Review -->
+              <div class="kanban-col col-active">
+                <div class="kanban-col-header">
+                  <span class="kanban-col-name">CPA Review</span>
+                  <span class="kanban-col-count">2</span>
+                </div>
+                <div class="kanban-col-line"></div>
+                <div class="kcard kcard-risk" onclick="window.location.href='project-detail.html'">
+                  <div>
+                    <div class="kcard-client">Acme Corp</div>
+                    <div class="kcard-period">FY 2025</div>
+                  </div>
+                  <div class="kcard-footer">
+                    <div class="kcard-avatar">SM</div>
+                    <span class="kcard-owner">Sarah M.</span>
+                    <span class="kcard-deadline dl-crit">Apr 30</span>
+                  </div>
+                </div>
+                <div class="kcard" onclick="window.location.href='project-detail.html'">
+                  <div>
+                    <div class="kcard-client">Lakeview Consulting</div>
+                    <div class="kcard-period">FY 2025</div>
+                  </div>
+                  <div class="kcard-footer">
+                    <div class="kcard-avatar" style="background:linear-gradient(135deg,#fb923c,#ea580c)">MT</div>
+                    <span class="kcard-owner">Marcus T.</span>
+                    <span class="kcard-deadline dl-ok">May 20</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Col 4: Client Sign-off -->
+              <div class="kanban-col">
+                <div class="kanban-col-header">
+                  <span class="kanban-col-name">Client Sign-off</span>
+                  <span class="kanban-col-count">1</span>
+                </div>
+                <div class="kanban-col-line"></div>
+                <div class="kcard" onclick="window.location.href='project-detail.html'">
+                  <div>
+                    <div class="kcard-client">Greenfield Partners</div>
+                    <div class="kcard-period">FY 2025</div>
+                  </div>
+                  <div class="kcard-footer">
+                    <div class="kcard-avatar">SM</div>
+                    <span class="kcard-owner">Sarah M.</span>
+                    <span class="kcard-deadline dl-ok">Jun 1</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Col 5: Filed ✓ -->
+              <div class="kanban-col col-done">
+                <div class="kanban-col-header">
+                  <span class="kanban-col-name">Filed ✓</span>
+                  <span class="kanban-col-count">0</span>
+                </div>
+                <div class="kanban-col-line"></div>
+                <div class="kanban-empty">None filed yet</div>
+              </div>
+
             </div>
           </div>
         </div>
@@ -1395,26 +1645,6 @@
 </style>
 
 <script>
-  function switchScope(btn, scope) {
-    // Update toggle active state
-    btn.closest('.scope-toggle').querySelectorAll('.scope-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-
-    const rows = document.querySelectorAll('#dash-portfolio-tbody tr');
-    let visible = 0;
-    rows.forEach(row => {
-      const isMyRow = row.dataset.owner === 'sm';
-      if (scope === 'all' || isMyRow) {
-        row.style.display = '';
-        visible++;
-      } else {
-        row.style.display = 'none';
-      }
-    });
-    document.getElementById('dash-pag-info').textContent =
-      scope === 'all' ? 'Showing 6 of 18' : 'Showing ' + visible + ' of ' + visible;
-  }
-
   function showPage(pageId, btn, title) {
     // Hide all pages
     document.querySelectorAll('.page').forEach(p => {
