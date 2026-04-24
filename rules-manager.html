@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Rules Manager — Atlas</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --primary:       #6366f1;
+    --primary-light: #eef2ff;
+    --primary-dark:  #4f46e5;
+    --slate-50:  #f8fafc;
+    --slate-100: #f1f5f9;
+    --slate-200: #e2e8f0;
+    --slate-300: #cbd5e1;
+    --slate-400: #94a3b8;
+    --slate-500: #64748b;
+    --slate-600: #475569;
+    --slate-700: #334155;
+    --slate-800: #1e293b;
+    --slate-900: #0f172a;
+    --success-bg:  #f0fdf4; --success-text: #15803d; --success-ring: #bbf7d0;
+    --warning-bg:  #fffbeb; --warning-text: #b45309; --warning-ring: #fde68a;
+    --danger-bg:   #fff1f2; --danger-text:  #be123c; --danger-ring:  #fecdd3;
+    --neutral-bg:  #f1f5f9; --neutral-text: #475569; --neutral-ring: #e2e8f0;
+    --radius: 12px; --radius-sm: 8px;
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / .05);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / .07), 0 2px 4px -2px rgb(0 0 0 / .05);
+  }
+
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 14px; background: var(--slate-50); color: var(--slate-900); min-height: 100vh; }
+  .shell { display: flex; min-height: 100vh; }
+
+  /* ── Sidebar ── */
+  .sidebar { width: 220px; flex-shrink: 0; background: white; border-right: 1px solid var(--slate-200); display: flex; flex-direction: column; }
+  .sidebar-logo { padding: 20px 20px 16px; border-bottom: 1px solid var(--slate-100); display: flex; align-items: center; gap: 10px; }
+  .sidebar-logo-mark { width: 30px; height: 30px; background: linear-gradient(135deg, var(--primary), var(--primary-dark)); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 13px; }
+  .sidebar-logo-name { font-weight: 700; font-size: 15px; color: var(--slate-900); }
+  .sidebar-nav { padding: 12px 10px; flex: 1; }
+  .nav-section-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .07em; color: var(--slate-400); padding: 8px 10px 4px; }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: var(--radius-sm); color: var(--slate-600); font-size: 13px; font-weight: 500; cursor: pointer; border: none; background: none; width: 100%; text-align: left; transition: background .15s, color .15s; text-decoration: none; }
+  .nav-item:hover { background: var(--slate-100); color: var(--slate-900); }
+  .nav-item.active { background: var(--primary-light); color: var(--primary); }
+  .nav-icon { width: 16px; height: 16px; opacity: .7; flex-shrink: 0; }
+  .nav-item.active .nav-icon { opacity: 1; }
+  .nav-badge { margin-left: auto; background: var(--danger-text); color: white; font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 9999px; }
+  .sidebar-footer { padding: 14px 16px; border-top: 1px solid var(--slate-100); display: flex; align-items: center; gap: 10px; }
+  .avatar { width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(135deg, #818cf8, var(--primary)); display: flex; align-items: center; justify-content: center; color: white; font-size: 12px; font-weight: 600; flex-shrink: 0; }
+  .avatar-sm { width: 24px; height: 24px; font-size: 10px; }
+  .sidebar-user-name { font-size: 13px; font-weight: 600; color: var(--slate-800); }
+  .sidebar-user-role { font-size: 11px; color: var(--slate-400); }
+
+  /* ── Main ── */
+  .main { flex: 1; display: flex; flex-direction: column; min-width: 0; overflow-y: auto; }
+  .topbar { height: 56px; background: white; border-bottom: 1px solid var(--slate-200); display: flex; align-items: center; padding: 0 28px; gap: 14px; position: sticky; top: 0; z-index: 20; }
+  .topbar-title { font-size: 16px; font-weight: 700; color: var(--slate-900); }
+  .topbar-divider { width: 1px; height: 20px; background: var(--slate-200); }
+  .client-select { padding: 6px 10px; border: 1px solid var(--slate-200); border-radius: var(--radius-sm); font-size: 13px; font-weight: 500; color: var(--slate-700); background: white; outline: none; cursor: pointer; }
+  .client-select:focus { border-color: var(--primary); }
+  .topbar-spacer { flex: 1; }
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: all .15s; }
+  .btn-primary { background: var(--primary); color: white; }
+  .btn-primary:hover { background: var(--primary-dark); }
+  .btn-ghost { background: transparent; color: var(--slate-600); }
+  .btn-ghost:hover { background: var(--slate-100); }
+  .btn-outline { background: white; color: var(--slate-700); border: 1px solid var(--slate-200); }
+  .btn-outline:hover { background: var(--slate-50); border-color: var(--slate-300); }
+  .btn-sm { padding: 5px 10px; font-size: 12px; }
+
+  /* ── Content ── */
+  .content { padding: 24px 28px; display: flex; flex-direction: column; gap: 20px; flex: 1; }
+
+  /* ── Stat strip ── */
+  .stat-strip { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; }
+  .stat-card { background: white; border: 1px solid var(--slate-200); border-radius: var(--radius); padding: 16px 18px; display: flex; flex-direction: column; gap: 6px; box-shadow: var(--shadow-sm); }
+  .stat-card.clickable { cursor: pointer; transition: box-shadow .15s; }
+  .stat-card.clickable:hover { box-shadow: var(--shadow-md); }
+  .stat-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--slate-400); }
+  .stat-value { font-size: 26px; font-weight: 700; color: var(--slate-900); line-height: 1; }
+  .stat-sub { font-size: 12px; color: var(--slate-500); }
+  .stat-card.success .stat-value { color: var(--success-text); }
+  .stat-card.warning .stat-value { color: var(--warning-text); }
+
+  /* ── AI Suggestions panel ── */
+  .suggestions-panel { background: var(--warning-bg); border: 1px solid var(--warning-ring); border-radius: var(--radius); padding: 18px 20px; display: flex; flex-direction: column; gap: 14px; }
+  .suggestions-header { display: flex; align-items: center; gap: 10px; }
+  .suggestions-title { font-size: 13px; font-weight: 700; color: var(--warning-text); flex: 1; }
+  .suggestions-sub { font-size: 12px; color: #92400e; }
+  .suggestions-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; }
+  .suggestion-card { background: white; border: 1px solid var(--warning-ring); border-radius: var(--radius-sm); padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+  .suggestion-pattern { font-size: 13px; font-weight: 700; color: var(--slate-900); font-family: ui-monospace, monospace; }
+  .suggestion-action { font-size: 12px; color: var(--slate-600); line-height: 1.5; }
+  .suggestion-stats { font-size: 11px; color: var(--slate-400); }
+  .suggestion-btns { display: flex; gap: 8px; margin-top: auto; }
+
+  /* ── Section / filter bar / table ── */
+  .section { background: white; border: 1px solid var(--slate-200); border-radius: var(--radius); box-shadow: var(--shadow-sm); overflow: hidden; }
+  .section-header { padding: 16px 20px; border-bottom: 1px solid var(--slate-100); display: flex; align-items: center; gap: 12px; }
+  .section-title { font-size: 14px; font-weight: 700; color: var(--slate-900); flex: 1; }
+  .section-count { font-size: 11px; font-weight: 600; background: var(--slate-100); color: var(--slate-500); padding: 2px 8px; border-radius: 20px; }
+  .filter-bar { padding: 12px 20px; border-bottom: 1px solid var(--slate-100); display: flex; align-items: center; gap: 10px; background: var(--slate-50); flex-wrap: wrap; }
+  .search-wrap { position: relative; flex: 1; max-width: 260px; }
+  .search-wrap svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--slate-400); }
+  .search-input { width: 100%; padding: 7px 10px 7px 32px; border: 1px solid var(--slate-200); border-radius: var(--radius-sm); font-size: 13px; color: var(--slate-700); background: white; outline: none; transition: border .15s; }
+  .search-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgb(99 102 241 / .1); }
+  .filter-divider { width: 1px; height: 16px; background: var(--slate-200); margin: 0 2px; }
+  .filter-chip { padding: 5px 11px; border: 1px solid var(--slate-200); border-radius: 20px; font-size: 12px; font-weight: 500; color: var(--slate-600); background: white; cursor: pointer; transition: all .15s; }
+  .filter-chip:hover { border-color: var(--primary); color: var(--primary); }
+  .filter-chip.active { background: var(--primary-light); border-color: var(--primary); color: var(--primary); font-weight: 600; }
+  .filter-label { font-size: 11px; font-weight: 600; color: var(--slate-400); text-transform: uppercase; letter-spacing: .05em; white-space: nowrap; }
+  .filter-spacer { flex: 1; }
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  thead th { padding: 10px 16px; text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--slate-500); background: white; border-bottom: 1px solid var(--slate-200); white-space: nowrap; }
+  thead th:first-child { padding-left: 20px; }
+  thead th:last-child { padding-right: 20px; }
+  tbody tr { transition: background .1s; cursor: pointer; }
+  tbody tr:hover { background: var(--slate-50); }
+  tbody tr + tr { border-top: 1px solid var(--slate-100); }
+  td { padding: 11px 16px; color: var(--slate-700); vertical-align: middle; }
+  td:first-child { padding-left: 20px; }
+  td:last-child { padding-right: 20px; }
+  .cell-primary { font-weight: 600; color: var(--slate-900); font-size: 13px; }
+  .cell-secondary { font-size: 11px; color: var(--slate-400); margin-top: 2px; font-family: ui-monospace, monospace; }
+  .cell-mono { font-family: ui-monospace, monospace; font-size: 12px; color: var(--slate-600); }
+
+  /* ── Badges ── */
+  .badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+  .badge-dot { width: 6px; height: 6px; border-radius: 50%; }
+  .badge-success { background: var(--success-bg); color: var(--success-text); }
+  .badge-success .badge-dot { background: var(--success-text); }
+  .badge-warning { background: var(--warning-bg); color: var(--warning-text); }
+  .badge-warning .badge-dot { background: var(--warning-text); }
+  .badge-danger  { background: var(--danger-bg);  color: var(--danger-text); }
+  .badge-neutral { background: var(--neutral-bg); color: var(--neutral-text); }
+  .badge-primary { background: var(--primary-light); color: var(--primary); }
+  .badge-purple  { background: #faf5ff; color: #7c3aed; }
+  .badge-ai      { background: #ecfdf5; color: #047857; }
+
+  /* ── Confidence bar ── */
+  .conf-wrap { display: flex; align-items: center; gap: 8px; }
+  .conf-bar { width: 56px; height: 4px; background: var(--slate-200); border-radius: 9999px; overflow: hidden; flex-shrink: 0; }
+  .conf-fill { height: 100%; border-radius: 9999px; }
+  .conf-fill.high   { background: #22c55e; }
+  .conf-fill.medium { background: #f59e0b; }
+  .conf-fill.low    { background: #f43f5e; }
+  .conf-pct { font-size: 12px; font-weight: 600; color: var(--slate-600); }
+  .conf-manual { font-size: 12px; color: var(--slate-300); }
+
+  /* ── Toggle switch ── */
+  .toggle-wrap { display: flex; align-items: center; }
+  .toggle { position: relative; display: inline-block; width: 32px; height: 18px; cursor: pointer; }
+  .toggle input { opacity: 0; width: 0; height: 0; }
+  .toggle-track { position: absolute; inset: 0; background: var(--slate-300); border-radius: 9999px; transition: background .2s; }
+  .toggle input:checked + .toggle-track { background: var(--primary); }
+  .toggle-knob { position: absolute; width: 14px; height: 14px; top: 2px; left: 2px; background: white; border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,.2); transition: left .2s; }
+  .toggle input:checked ~ .toggle-knob { left: 16px; }
+
+  /* ── Row actions ── */
+  .row-actions { display: flex; align-items: center; gap: 4px; opacity: 0; transition: opacity .15s; }
+  tbody tr:hover .row-actions { opacity: 1; }
+  .action-icon-btn { width: 28px; height: 28px; border: none; background: none; cursor: pointer; border-radius: 6px; padding: 4px; color: var(--slate-400); display: flex; align-items: center; justify-content: center; transition: background .15s, color .15s; }
+  .action-icon-btn:hover { background: var(--slate-100); color: var(--slate-700); }
+  .action-icon-btn.danger:hover { background: var(--danger-bg); color: var(--danger-text); }
+
+  /* ── Drawer ── */
+  .drawer-overlay { position: fixed; inset: 0; background: rgba(15,23,42,.15); z-index: 40; opacity: 0; pointer-events: none; transition: opacity .2s; }
+  .drawer-overlay.open { opacity: 1; pointer-events: auto; }
+  .drawer { position: fixed; top: 0; right: 0; bottom: 0; width: 380px; background: white; border-left: 1px solid var(--slate-200); z-index: 50; transform: translateX(100%); transition: transform .25s ease; box-shadow: -4px 0 24px rgba(0,0,0,.08); display: flex; flex-direction: column; }
+  .drawer.open { transform: translateX(0); }
+  .drawer-header { height: 56px; display: flex; align-items: center; padding: 0 20px; gap: 12px; border-bottom: 1px solid var(--slate-200); flex-shrink: 0; }
+  .drawer-title { font-size: 14px; font-weight: 700; color: var(--slate-900); flex: 1; }
+  .drawer-close { width: 30px; height: 30px; border: none; background: none; cursor: pointer; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: var(--slate-400); }
+  .drawer-close:hover { background: var(--slate-100); color: var(--slate-700); }
+  .drawer-body { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 20px; }
+  .drawer-footer { padding: 16px 20px; border-top: 1px solid var(--slate-200); display: flex; gap: 10px; justify-content: flex-end; flex-shrink: 0; }
+  .drawer-section { display: flex; flex-direction: column; gap: 12px; }
+  .drawer-section-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--slate-400); padding-bottom: 4px; border-bottom: 1px solid var(--slate-100); }
+  .field-group { display: flex; flex-direction: column; gap: 5px; }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .field-label { font-size: 11px; font-weight: 600; color: var(--slate-500); }
+  .field-input { width: 100%; padding: 7px 10px; border: 1px solid var(--slate-200); border-radius: var(--radius-sm); font-size: 13px; color: var(--slate-700); background: white; outline: none; font-family: inherit; }
+  .field-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgb(99 102 241 / .1); }
+  .field-select { width: 100%; padding: 7px 10px; border: 1px solid var(--slate-200); border-radius: var(--radius-sm); font-size: 13px; color: var(--slate-700); background: white; outline: none; cursor: pointer; }
+  .field-select:focus { border-color: var(--primary); }
+  .drawer-stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .drawer-stat { background: var(--slate-50); border-radius: var(--radius-sm); padding: 10px 12px; }
+  .drawer-stat-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--slate-400); margin-bottom: 4px; }
+  .drawer-stat-value { font-size: 18px; font-weight: 700; color: var(--slate-900); }
+  .drawer-stat-sub { font-size: 11px; color: var(--slate-500); }
+  .badge-row { display: flex; gap: 6px; flex-wrap: wrap; }
+  .empty-row td { padding: 32px 20px; text-align: center; font-size: 13px; color: var(--slate-400); }
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+  <!-- ── Sidebar ── -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-mark">A</div>
+      <span class="sidebar-logo-name">Atlas</span>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Workspace</div>
+      <a class="nav-item" href="dashboard.html">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+        Dashboard
+      </a>
+      <a class="nav-item" href="agent-hub.html">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/></svg>
+        Inbox
+        <span class="nav-badge">5</span>
+      </a>
+      <a class="nav-item" href="projects-list.html">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+        Projects
+      </a>
+      <a class="nav-item" href="clients-list.html">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        Clients
+      </a>
+      <a class="nav-item" href="workflow-live.html">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+        Workflows
+      </a>
+      <a class="nav-item active" href="rules-manager.html">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
+        Rules
+      </a>
+      <div class="nav-section-label" style="margin-top:12px">Reports</div>
+      <a class="nav-item" href="dashboard.html">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+        Analytics
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="avatar">SM</div>
+      <div>
+        <div class="sidebar-user-name">Sarah M.</div>
+        <div class="sidebar-user-role">Senior Manager</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ── Main ── -->
+  <div class="main">
+
+    <header class="topbar">
+      <span class="topbar-title">Rules Manager</span>
+      <div class="topbar-divider"></div>
+      <select class="client-select" onchange="updateClient(this)">
+        <option>Bright &amp; Bloom LLC</option>
+        <option>NovaTech Solutions Inc.</option>
+        <option>Bridgewater LLC</option>
+        <option>Harbor &amp; Cole LLP</option>
+        <option>Clearwater Clinic</option>
+      </select>
+      <div class="topbar-spacer"></div>
+      <button class="btn btn-outline btn-sm" onclick="exportRules()">Export</button>
+      <button class="btn btn-primary btn-sm" onclick="openDrawer(null)">
+        <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+        Add Rule
+      </button>
+    </header>
+
+    <div class="content">
+
+      <!-- Stat strip -->
+      <div class="stat-strip">
+        <div class="stat-card">
+          <div class="stat-label">Active Rules</div>
+          <div class="stat-value">24</div>
+          <div class="stat-sub">9 routing · 15 category</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Matched This Month</div>
+          <div class="stat-value">1,847</div>
+          <div class="stat-sub">transactions auto-handled</div>
+        </div>
+        <div class="stat-card success">
+          <div class="stat-label">Auto-Categorized</div>
+          <div class="stat-value">94%</div>
+          <div class="stat-sub">↑ 3% from last month</div>
+        </div>
+        <div class="stat-card warning clickable" onclick="document.getElementById('suggestions').scrollIntoView({behavior:'smooth'})">
+          <div class="stat-label">AI Suggestions</div>
+          <div class="stat-value">3</div>
+          <div class="stat-sub">patterns detected ↓ review</div>
+        </div>
+      </div>
+
+      <!-- AI Suggestions -->
+      <div class="suggestions-panel" id="suggestions">
+        <div class="suggestions-header">
+          <svg width="16" height="16" fill="none" stroke="#b45309" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+          <span class="suggestions-title">Atlas noticed 3 new patterns</span>
+          <span class="suggestions-sub">Review and add as rules to improve future accuracy</span>
+          <button class="btn btn-ghost btn-sm" onclick="dismissAll()">Dismiss all</button>
+        </div>
+        <div class="suggestions-grid" id="suggestions-grid">
+          <div class="suggestion-card" id="sug-0">
+            <div class="suggestion-pattern">SHOPIFY PAYOUT*</div>
+            <div class="suggestion-action">34 transactions detected — route to <strong>Income Split</strong> (Shopify config)</div>
+            <div class="suggestion-stats">First seen Mar 15 · last seen Apr 22</div>
+            <div class="suggestion-btns">
+              <button class="btn btn-primary btn-sm" onclick="openFromSuggestion(0)">Add Rule</button>
+              <button class="btn btn-ghost btn-sm" onclick="dismissSuggestion(0)">Dismiss</button>
+            </div>
+          </div>
+          <div class="suggestion-card" id="sug-1">
+            <div class="suggestion-pattern">SQUARE POS*</div>
+            <div class="suggestion-action">22 transactions detected — route to <strong>Income Split</strong> (Square config)</div>
+            <div class="suggestion-stats">First seen Apr 2 · last seen Apr 23</div>
+            <div class="suggestion-btns">
+              <button class="btn btn-primary btn-sm" onclick="openFromSuggestion(1)">Add Rule</button>
+              <button class="btn btn-ghost btn-sm" onclick="dismissSuggestion(1)">Dismiss</button>
+            </div>
+          </div>
+          <div class="suggestion-card" id="sug-2">
+            <div class="suggestion-pattern">COSTCO WHOLESALE*</div>
+            <div class="suggestion-action">15 transactions — categorize as <strong>Inventory &amp; Supplies</strong></div>
+            <div class="suggestion-stats">First seen Feb 28 · last seen Apr 18</div>
+            <div class="suggestion-btns">
+              <button class="btn btn-primary btn-sm" onclick="openFromSuggestion(2)">Add Rule</button>
+              <button class="btn btn-ghost btn-sm" onclick="dismissSuggestion(2)">Dismiss</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Rules table -->
+      <div class="section">
+        <div class="section-header">
+          <span class="section-title">Rules</span>
+          <span class="section-count" id="rule-count">9 rules</span>
+        </div>
+        <div class="filter-bar">
+          <div class="search-wrap">
+            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
+            <input class="search-input" type="text" placeholder="Search rules or patterns…" oninput="filterTable()" id="search-input" />
+          </div>
+          <div class="filter-divider"></div>
+          <span class="filter-label">Type</span>
+          <button class="filter-chip active" data-group="type" data-val="all" onclick="setChip(this)">All</button>
+          <button class="filter-chip" data-group="type" data-val="routing" onclick="setChip(this)">Routing</button>
+          <button class="filter-chip" data-group="type" data-val="category" onclick="setChip(this)">Category</button>
+          <div class="filter-divider"></div>
+          <span class="filter-label">Source</span>
+          <button class="filter-chip active" data-group="source" data-val="all" onclick="setChip(this)">All</button>
+          <button class="filter-chip" data-group="source" data-val="manual" onclick="setChip(this)">Manual</button>
+          <button class="filter-chip" data-group="source" data-val="ai" onclick="setChip(this)">AI-learned</button>
+          <div class="filter-divider"></div>
+          <span class="filter-label">Status</span>
+          <button class="filter-chip active" data-group="status" data-val="all" onclick="setChip(this)">All</button>
+          <button class="filter-chip" data-group="status" data-val="active" onclick="setChip(this)">Active</button>
+          <button class="filter-chip" data-group="status" data-val="paused" onclick="setChip(this)">Paused</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Rule / Pattern</th>
+                <th>Type</th>
+                <th>Routes to / Category</th>
+                <th>Matched</th>
+                <th>Last fired</th>
+                <th>Source</th>
+                <th>Confidence</th>
+                <th>Status</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="rules-tbody">
+              <!-- Routing — manual -->
+              <tr data-id="1" data-type="routing" data-source="manual" data-status="active" onclick="openDrawer(1)">
+                <td>
+                  <div class="cell-primary">Stripe Payouts</div>
+                  <div class="cell-secondary">STRIPE PAYOUT*</div>
+                </td>
+                <td><span class="badge badge-primary">Routing</span></td>
+                <td><span style="font-size:12px;color:var(--slate-700);font-weight:500;">Income Split <span style="color:var(--slate-400)">· Shopify config</span></span></td>
+                <td><span style="font-weight:700;font-size:13px;">156</span><span style="font-size:11px;color:var(--slate-400);margin-left:4px;">this mo.</span></td>
+                <td><span style="font-size:12px;color:var(--slate-500);">Apr 23</span></td>
+                <td><span class="badge badge-neutral">Manual</span></td>
+                <td><span class="conf-manual">—</span></td>
+                <td onclick="event.stopPropagation()">
+                  <label class="toggle"><input type="checkbox" checked onchange="toggleStatus(this,1)"><div class="toggle-track"></div><div class="toggle-knob"></div></label>
+                </td>
+                <td onclick="event.stopPropagation()">
+                  <div class="row-actions">
+                    <button class="action-icon-btn" title="Edit" onclick="openDrawer(1)"><svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg></button>
+                    <button class="action-icon-btn danger" title="Delete"><svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>
+                  </div>
+                </td>
+              </tr>
+              <tr data-id="2" data-type="routing" data-source="manual" data-status="active" onclick="openDrawer(2)">
+                <td>
+                  <div class="cell-primary">Bank Transfers</div>
+                  <div class="cell-secondary">TRANSFER|WIRE|ACH*</div>
+                </td>
+                <td><span class="badge badge-primary">Routing</span></td>
+                <td><span style="font-size:12px;color:var(--slate-700);font-weight:500;">Transfer <span style="color:var(--slate-400)">· Auto-match</span></span></td>
+                <td><span style="font-weight:700;font-size:13px;">89</span><span style="font-size:11px;color:var(--slate-400);margin-left:4px;">this mo.</span></td>
+                <td><span style="font-size:12px;color:var(--slate-500);">Apr 23</span></td>
+                <td><span class="badge badge-neutral">Manual</span></td>
+                <td><span class="conf-manual">—</span></td>
+                <td onclick="event.stopPropagation()">
+                  <label class="toggle"><input type="checkbox" checked onchange="toggleStatus(this,2)"><div class="toggle-track"></div><div class="toggle-knob"></div></label>
+                </td>
+                <td onclick="event.stopPropagation()">
+                  <div class="row-actions">
+                    <button class="action-icon-btn" title="Edit" onclick="openDrawer(2)"><svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg></button>
+                    <button class="action-icon-btn danger" title="Delete"><svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>
+                  </div>
+                </td>
+              </tr>
+              <tr data-id="3" data-type="routing" data-source="manual" data-status="active" onclick="openDrawer(3)">
+                <td>
+                  <div class="cell-primary">Payroll Direct</div>
+                  <div class="cell-secondary">ADP PAYROLL*|GUSTO*</div>
+                </td>
+                <td><span class="badge badge-primary">Routing</span></td>
+                <td><span style="font-size:12px;color:var(--slate-700);font-weight:500;">Flag for Review <span style="color:var(--slate-400)">· Payroll queue</span></span></td>
+                <td><span style="font-weight:700;font-size:13px;">24</span><span style="font-size:11px;color:var(--slate-400);margin-left:4px;">this mo.</span></td>
+                <td><span style="font-size:12px;color:var(--slate-500);">Apr 15</span></td>
+                <td><span class="badge badge-neutral">Manual</span></td>
+                <td><span class="conf-manual">—</span></td>
+                <td onclick="event.stopPropagation()">
+                  <label class="toggle"><input type="checkbox" checked onchange="toggleStatus(this,3)"><div class="toggle-track"></div><div class="toggle-knob"></div></label>
+                </td>
+                <td onclick="event.stopPropagation()">
+                  <div class="row-actions">
+                    <button class="action-icon-btn" title="Edit" onclick="openDrawer(3)"><svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg></button>
+                    <button class="action-icon-btn danger" title="Delete"><svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>
+                  </div>
+                </td>
+              </tr>
+              <tr data-id="4" data-type="routing" data-source="manual" data-status="paused" onclick="openDrawer(4)">
+                <td>
+                  <div class="cell-primary" style="color:var(--slate-400)">Refunds</div>
+                  <div class="cell-secondary">REFUND*|CREDIT MEMO*</div>
+                </td>
+                <td><span class="badge badge-primary">Routing</span></td>
+                <td><span style="font-size:12px;color:var(--slate-400);">Income Split · Refunds config</span></td>
+                <td><span style="font-weight:700;font-size:13px;color:var(--slate-400);">18</span><span style="font-size:11px;color:var(--slate-300);margin-left:4px;">this mo.</span></td>
+                <td><span style="font-size:12px;color:var(--slate-400);">Mar 30</span></td>
+                <td><span class="badge badge-neutral">Manual</span></td>
+                <td><span class="conf-manual">—</span></td>
+                <td onclick="event.stopPropagation()">
+                  <label class="toggle"><input type="checkbox" onchange="toggleStatus(this,4)"><div class="toggle-track"></div><div class="toggle-knob"></div></label>
+                </td>
+                <td onclick="event.stopPropagation()">
+                  <div class="row-actions">
+                    <button class="action-icon-btn" title="Edit" onclick="openDrawer(4)"><svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg></button>
+                    <button class="action-icon-btn danger" title="Delete"><svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>
+                  </div>
+                </td>
+              </tr>
+              <!-- Category — manual -->
+              <tr data-id="5" data-type="category" data-source="manual" data-status="active" onclick="openDrawer(5)">
+                <td>
+                  <div class="cell-primary">Amazon Business</div>
+                  <div class="cell-secondary">AMAZON.COM*|AMZN MKTP*</div>
+                </td>
+                <td><span class="badge badge-neutral">Category</span></td>
+                <td><span style="font-size:12px;color:var(--slate-700);font-weight:500;">Office Supplies</span></td>
+                <td><span style="font-weight:700;font-size:13px;">67</span><span style="font-size:11px;color:var(--slate-400);margin-left:4px;">this mo.</span></td>
+                <td><span style="font-size:12px;color:var(--slate-500);">Apr 22</span></td>
+                <td><span class="badge badge-neutral">Manual</span></td>
+                <td><span class="conf-manual">—</span></td>
+                <td onclick="event.stopPropagation()">
+                  <label class="toggle"><input type="checkbox" checked onchange="toggleStatus(this,5)"><div class="toggle-track"></div><div class="toggle-knob"></div></label>
+                </td>
+                <td onclick="event.stopPropagation()">
+                  <div class="row-actions">
+                    <button class="action-icon-btn" title="Edit" onclick="openDrawer(5)"><svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg></button>
+                    <button class="action-icon-btn danger" title="Delete"><svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>
+                  </div>
+                </td>
+              </tr>
+              <tr data-id="6" data-type="category" data-source="manual" data-status="active" onclick="openDrawer(6)">
+                <td>
+                  <div class="cell-primary">Uber / Lyft</div>
+                  <div class="cell-secondary">UBER*|LYFT*</div>
+                </td>
+                <td><span class="badge badge-neutral">Category</span></td>
+                <td><span style="font-size:12px;color:var(--slate-700);font-weight:500;">Travel &amp; Transport</span></td>
+                <td><span style="font-weight:700;font-size:13px;">43</span><span style="font-size:11px;color:var(--slate-400);margin-left:4px;">this mo.</span></td>
+                <td><span style="font-size:12px;color:var(--slate-500);">Apr 21</span></td>
+                <td><span class="badge badge-neutral">Manual</span></td>
+                <td><span class="conf-manual">—</span></td>
+                <td onclick="event.stopPropagation()">
+                  <label class="toggle"><input type="checkbox" checked onchange="toggleStatus(this,6)"><div class="toggle-track"></div><div class="toggle-knob"></div></label>
+                </td>
+                <td onclick="event.stopPropagation()">
+                  <div class="row-actions">
+                    <button class="action-icon-btn" title="Edit" onclick="openDrawer(6)"><svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg></button>
+                    <button class="action-icon-btn danger" title="Delete"><svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>
+                  </div>
+                </td>
+              </tr>
+              <!-- Category — AI-learned -->
+              <tr data-id="7" data-type="category" data-source="ai" data-status="active" onclick="openDrawer(7)">
+                <td>
+                  <div class="cell-primary">Coffee &amp; Meals</div>
+                  <div class="cell-secondary">STARBUCKS*|DOORDASH*|GRUBHUB*</div>
+                </td>
+                <td><span class="badge badge-neutral">Category</span></td>
+                <td><span style="font-size:12px;color:var(--slate-700);font-weight:500;">Meals &amp; Entertainment</span></td>
+                <td><span style="font-weight:700;font-size:13px;">91</span><span style="font-size:11px;color:var(--slate-400);margin-left:4px;">this mo.</span></td>
+                <td><span style="font-size:12px;color:var(--slate-500);">Apr 23</span></td>
+                <td><span class="badge badge-ai">AI-learned</span></td>
+                <td>
+                  <div class="conf-wrap">
+                    <div class="conf-bar"><div class="conf-fill high" style="width:91%"></div></div>
+                    <span class="conf-pct">91%</span>
+                  </div>
+                </td>
+                <td onclick="event.stopPropagation()">
+                  <label class="toggle"><input type="checkbox" checked onchange="toggleStatus(this,7)"><div class="toggle-track"></div><div class="toggle-knob"></div></label>
+                </td>
+                <td onclick="event.stopPropagation()">
+                  <div class="row-actions">
+                    <button class="action-icon-btn" title="Edit" onclick="openDrawer(7)"><svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg></button>
+                    <button class="action-icon-btn danger" title="Delete"><svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>
+                  </div>
+                </td>
+              </tr>
+              <tr data-id="8" data-type="category" data-source="ai" data-status="active" onclick="openDrawer(8)">
+                <td>
+                  <div class="cell-primary">Cloud Services</div>
+                  <div class="cell-secondary">AWS*|GOOGLE CLOUD*|MSFT AZURE*</div>
+                </td>
+                <td><span class="badge badge-neutral">Category</span></td>
+                <td><span style="font-size:12px;color:var(--slate-700);font-weight:500;">Software &amp; SaaS</span></td>
+                <td><span style="font-weight:700;font-size:13px;">34</span><span style="font-size:11px;color:var(--slate-400);margin-left:4px;">this mo.</span></td>
+                <td><span style="font-size:12px;color:var(--slate-500);">Apr 20</span></td>
+                <td><span class="badge badge-ai">AI-learned</span></td>
+                <td>
+                  <div class="conf-wrap">
+                    <div class="conf-bar"><div class="conf-fill medium" style="width:87%"></div></div>
+                    <span class="conf-pct">87%</span>
+                  </div>
+                </td>
+                <td onclick="event.stopPropagation()">
+                  <label class="toggle"><input type="checkbox" checked onchange="toggleStatus(this,8)"><div class="toggle-track"></div><div class="toggle-knob"></div></label>
+                </td>
+                <td onclick="event.stopPropagation()">
+                  <div class="row-actions">
+                    <button class="action-icon-btn" title="Edit" onclick="openDrawer(8)"><svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg></button>
+                    <button class="action-icon-btn danger" title="Delete"><svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>
+                  </div>
+                </td>
+              </tr>
+              <tr data-id="9" data-type="category" data-source="ai" data-status="active" onclick="openDrawer(9)">
+                <td>
+                  <div class="cell-primary">Adobe Creative</div>
+                  <div class="cell-secondary">ADOBE*</div>
+                </td>
+                <td><span class="badge badge-neutral">Category</span></td>
+                <td><span style="font-size:12px;color:var(--slate-700);font-weight:500;">Software &amp; SaaS</span></td>
+                <td><span style="font-weight:700;font-size:13px;">12</span><span style="font-size:11px;color:var(--slate-400);margin-left:4px;">this mo.</span></td>
+                <td><span style="font-size:12px;color:var(--slate-500);">Apr 19</span></td>
+                <td><span class="badge badge-ai">AI-learned</span></td>
+                <td>
+                  <div class="conf-wrap">
+                    <div class="conf-bar"><div class="conf-fill high" style="width:95%"></div></div>
+                    <span class="conf-pct">95%</span>
+                  </div>
+                </td>
+                <td onclick="event.stopPropagation()">
+                  <label class="toggle"><input type="checkbox" checked onchange="toggleStatus(this,9)"><div class="toggle-track"></div><div class="toggle-knob"></div></label>
+                </td>
+                <td onclick="event.stopPropagation()">
+                  <div class="row-actions">
+                    <button class="action-icon-btn" title="Edit" onclick="openDrawer(9)"><svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg></button>
+                    <button class="action-icon-btn danger" title="Delete"><svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>
+                  </div>
+                </td>
+              </tr>
+              <tr id="empty-row" style="display:none"><td colspan="9" style="padding:32px 20px;text-align:center;font-size:13px;color:var(--slate-400);">No rules match your filters.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div><!-- .content -->
+  </div><!-- .main -->
+
+</div><!-- .shell -->
+
+<!-- Drawer overlay -->
+<div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer()"></div>
+
+<!-- Rule detail / edit drawer -->
+<div class="drawer" id="drawer">
+  <div class="drawer-header">
+    <span class="drawer-title" id="drawer-title">Rule Details</span>
+    <div class="badge-row" id="drawer-badges"></div>
+    <button class="drawer-close" onclick="closeDrawer()">
+      <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+    </button>
+  </div>
+  <div class="drawer-body" id="drawer-body">
+    <!-- filled by JS -->
+  </div>
+  <div class="drawer-footer">
+    <button class="btn btn-ghost" onclick="closeDrawer()">Cancel</button>
+    <button class="btn btn-primary" onclick="closeDrawer()">Save Rule</button>
+  </div>
+</div>
+
+<script>
+  const RULES = {
+    1: { name:'Stripe Payouts', pattern:'STRIPE PAYOUT*', type:'Routing', source:'Manual', action:'Income Split', detail:'Shopify config', matches:156, matchesTotal:1203, lastFired:'Apr 23, 2026', created:'Jan 15, 2026', modified:'Apr 20, 2026', confidence:null, minAmount:null, maxAmount:null, purpose:'payment', medium:'electronic', entityType:null },
+    2: { name:'Bank Transfers', pattern:'TRANSFER|WIRE|ACH*', type:'Routing', source:'Manual', action:'Transfer', detail:'Auto-match', matches:89, matchesTotal:654, lastFired:'Apr 23, 2026', created:'Jan 15, 2026', modified:'Feb 1, 2026', confidence:null, minAmount:null, maxAmount:null, purpose:null, medium:'electronic', entityType:null },
+    3: { name:'Payroll Direct', pattern:'ADP PAYROLL*|GUSTO*', type:'Routing', source:'Manual', action:'Flag for Review', detail:'Payroll queue', matches:24, matchesTotal:192, lastFired:'Apr 15, 2026', created:'Jan 20, 2026', modified:'Jan 20, 2026', confidence:null, minAmount:1000, maxAmount:null, purpose:'payroll', medium:'electronic', entityType:'employer' },
+    4: { name:'Refunds', pattern:'REFUND*|CREDIT MEMO*', type:'Routing', source:'Manual', action:'Income Split', detail:'Refunds config', matches:18, matchesTotal:87, lastFired:'Mar 30, 2026', created:'Feb 5, 2026', modified:'Mar 1, 2026', confidence:null, minAmount:null, maxAmount:null, purpose:'refund', medium:null, entityType:null },
+    5: { name:'Amazon Business', pattern:'AMAZON.COM*|AMZN MKTP*', type:'Category', source:'Manual', action:'Office Supplies', detail:null, matches:67, matchesTotal:412, lastFired:'Apr 22, 2026', created:'Jan 15, 2026', modified:'Jan 15, 2026', confidence:null, minAmount:null, maxAmount:null, purpose:null, medium:null, entityType:null },
+    6: { name:'Uber / Lyft', pattern:'UBER*|LYFT*', type:'Category', source:'Manual', action:'Travel & Transport', detail:null, matches:43, matchesTotal:289, lastFired:'Apr 21, 2026', created:'Jan 15, 2026', modified:'Jan 15, 2026', confidence:null, minAmount:null, maxAmount:null, purpose:null, medium:null, entityType:null },
+    7: { name:'Coffee & Meals', pattern:'STARBUCKS*|DOORDASH*|GRUBHUB*', type:'Category', source:'AI-learned', action:'Meals & Entertainment', detail:null, matches:91, matchesTotal:334, lastFired:'Apr 23, 2026', created:'Mar 2, 2026', modified:'Apr 1, 2026', confidence:91, minAmount:null, maxAmount:null, purpose:null, medium:null, entityType:null },
+    8: { name:'Cloud Services', pattern:'AWS*|GOOGLE CLOUD*|MSFT AZURE*', type:'Category', source:'AI-learned', action:'Software & SaaS', detail:null, matches:34, matchesTotal:156, lastFired:'Apr 20, 2026', created:'Mar 10, 2026', modified:'Apr 10, 2026', confidence:87, minAmount:null, maxAmount:null, purpose:null, medium:'electronic', entityType:null },
+    9: { name:'Adobe Creative', pattern:'ADOBE*', type:'Category', source:'AI-learned', action:'Software & SaaS', detail:null, matches:12, matchesTotal:67, lastFired:'Apr 19, 2026', created:'Mar 15, 2026', modified:'Apr 15, 2026', confidence:95, minAmount:null, maxAmount:null, purpose:null, medium:'electronic', entityType:'company' },
+  };
+
+  const SUGGESTIONS = [
+    { pattern:'SHOPIFY PAYOUT*', txCount:34, action:'Income Split', detail:'Shopify config', type:'Routing' },
+    { pattern:'SQUARE POS*', txCount:22, action:'Income Split', detail:'Square config', type:'Routing' },
+    { pattern:'COSTCO WHOLESALE*', txCount:15, action:'Inventory & Supplies', detail:null, type:'Category' },
+  ];
+
+  function setChip(el) {
+    const group = el.dataset.group;
+    document.querySelectorAll(`[data-group="${group}"]`).forEach(c => c.classList.remove('active'));
+    el.classList.add('active');
+    filterTable();
+  }
+
+  function filterTable() {
+    const search = document.getElementById('search-input').value.toLowerCase();
+    const type   = document.querySelector('[data-group="type"].active').dataset.val;
+    const source = document.querySelector('[data-group="source"].active').dataset.val;
+    const status = document.querySelector('[data-group="status"].active').dataset.val;
+    const rows   = document.querySelectorAll('#rules-tbody tr[data-id]');
+    let visible  = 0;
+    rows.forEach(row => {
+      const matchType   = type   === 'all' || row.dataset.type   === type;
+      const matchSource = source === 'all' || row.dataset.source === source;
+      const matchStatus = status === 'all' || row.dataset.status === status;
+      const matchSearch = !search || row.textContent.toLowerCase().includes(search);
+      const show = matchType && matchSource && matchStatus && matchSearch;
+      row.style.display = show ? '' : 'none';
+      if (show) visible++;
+    });
+    document.getElementById('empty-row').style.display = visible === 0 ? '' : 'none';
+    document.getElementById('rule-count').textContent = visible + ' rule' + (visible !== 1 ? 's' : '');
+  }
+
+  function openDrawer(id) {
+    const drawer = document.getElementById('drawer');
+    const overlay = document.getElementById('drawer-overlay');
+    const body = document.getElementById('drawer-body');
+    const titleEl = document.getElementById('drawer-title');
+    const badgesEl = document.getElementById('drawer-badges');
+
+    if (id === null) {
+      titleEl.textContent = 'New Rule';
+      badgesEl.innerHTML = '';
+      body.innerHTML = newRuleForm();
+    } else {
+      const r = RULES[id];
+      titleEl.textContent = r.name;
+      const srcColor = r.source === 'AI-learned' ? 'badge-ai' : 'badge-neutral';
+      badgesEl.innerHTML = `<span class="badge ${r.type === 'Routing' ? 'badge-primary' : 'badge-neutral'}">${r.type}</span><span class="badge ${srcColor}">${r.source}</span>`;
+      body.innerHTML = ruleDetailHTML(r);
+    }
+
+    drawer.classList.add('open');
+    overlay.classList.add('open');
+  }
+
+  function openFromSuggestion(idx) {
+    const s = SUGGESTIONS[idx];
+    const drawer = document.getElementById('drawer');
+    const overlay = document.getElementById('drawer-overlay');
+    const body = document.getElementById('drawer-body');
+    document.getElementById('drawer-title').textContent = 'New Rule from Suggestion';
+    document.getElementById('drawer-badges').innerHTML = `<span class="badge badge-warning">From AI suggestion</span>`;
+    body.innerHTML = newRuleForm(s);
+    drawer.classList.add('open');
+    overlay.classList.add('open');
+  }
+
+  function closeDrawer() {
+    document.getElementById('drawer').classList.remove('open');
+    document.getElementById('drawer-overlay').classList.remove('open');
+  }
+
+  function ruleDetailHTML(r) {
+    const confHTML = r.confidence
+      ? `<div class="conf-wrap"><div class="conf-bar"><div class="conf-fill ${r.confidence>=90?'high':r.confidence>=80?'medium':'low'}" style="width:${r.confidence}%"></div></div><span class="conf-pct">${r.confidence}%</span></div>`
+      : `<span style="font-size:12px;color:var(--slate-400)">N/A (manual rule)</span>`;
+    return `
+      <div class="drawer-section">
+        <div class="drawer-section-title">Match Conditions</div>
+        <div class="field-group">
+          <div class="field-label">Description Pattern</div>
+          <input class="field-input" value="${r.pattern}" style="font-family:ui-monospace,monospace;font-size:12px" />
+        </div>
+        <div class="field-row">
+          <div class="field-group">
+            <div class="field-label">Min Amount ($)</div>
+            <input class="field-input" type="number" value="${r.minAmount || ''}" placeholder="Any" />
+          </div>
+          <div class="field-group">
+            <div class="field-label">Max Amount ($)</div>
+            <input class="field-input" type="number" value="${r.maxAmount || ''}" placeholder="Any" />
+          </div>
+        </div>
+        ${r.type === 'Routing' ? `
+        <div class="field-row">
+          <div class="field-group">
+            <div class="field-label">Intent Purpose</div>
+            <select class="field-select">
+              <option ${!r.purpose?'selected':''}>Any</option>
+              <option ${r.purpose==='payment'?'selected':''}>payment</option>
+              <option ${r.purpose==='refund'?'selected':''}>refund</option>
+              <option ${r.purpose==='payroll'?'selected':''}>payroll</option>
+              <option ${r.purpose==='transfer'?'selected':''}>transfer</option>
+            </select>
+          </div>
+          <div class="field-group">
+            <div class="field-label">Entity Type</div>
+            <select class="field-select">
+              <option ${!r.entityType?'selected':''}>Any</option>
+              <option ${r.entityType==='company'?'selected':''}>company</option>
+              <option ${r.entityType==='employer'?'selected':''}>employer</option>
+              <option ${r.entityType==='individual'?'selected':''}>individual</option>
+            </select>
+          </div>
+        </div>` : ''}
+      </div>
+      <div class="drawer-section">
+        <div class="drawer-section-title">Action</div>
+        <div class="field-group">
+          <div class="field-label">${r.type === 'Routing' ? 'Route to' : 'Categorize as'}</div>
+          <input class="field-input" value="${r.action}${r.detail ? ' · ' + r.detail : ''}" />
+        </div>
+      </div>
+      <div class="drawer-section">
+        <div class="drawer-section-title">Performance</div>
+        <div class="drawer-stat-grid">
+          <div class="drawer-stat">
+            <div class="drawer-stat-label">This Month</div>
+            <div class="drawer-stat-value">${r.matches}</div>
+            <div class="drawer-stat-sub">transactions matched</div>
+          </div>
+          <div class="drawer-stat">
+            <div class="drawer-stat-label">All Time</div>
+            <div class="drawer-stat-value">${r.matchesTotal.toLocaleString()}</div>
+            <div class="drawer-stat-sub">total matches</div>
+          </div>
+          <div class="drawer-stat">
+            <div class="drawer-stat-label">Confidence</div>
+            <div class="drawer-stat-value" style="font-size:14px;padding-top:4px">${confHTML}</div>
+          </div>
+          <div class="drawer-stat">
+            <div class="drawer-stat-label">Last Fired</div>
+            <div class="drawer-stat-value" style="font-size:13px;padding-top:2px">${r.lastFired}</div>
+          </div>
+        </div>
+        <div style="font-size:11px;color:var(--slate-400);margin-top:8px;">Created ${r.created} · Last modified ${r.modified}</div>
+      </div>`;
+  }
+
+  function newRuleForm(prefill) {
+    return `
+      <div class="drawer-section">
+        <div class="drawer-section-title">Rule Details</div>
+        <div class="field-group">
+          <div class="field-label">Rule Name</div>
+          <input class="field-input" placeholder="e.g. Shopify Payouts" />
+        </div>
+        <div class="field-group">
+          <div class="field-label">Type</div>
+          <select class="field-select">
+            <option ${prefill?.type==='Routing'?'selected':''}>Routing</option>
+            <option ${prefill?.type==='Category'?'selected':''}>Category</option>
+          </select>
+        </div>
+      </div>
+      <div class="drawer-section">
+        <div class="drawer-section-title">Match Conditions</div>
+        <div class="field-group">
+          <div class="field-label">Description Pattern</div>
+          <input class="field-input" value="${prefill?.pattern||''}" placeholder="e.g. SHOPIFY PAYOUT*" style="font-family:ui-monospace,monospace;font-size:12px" />
+        </div>
+        <div class="field-row">
+          <div class="field-group">
+            <div class="field-label">Min Amount ($)</div>
+            <input class="field-input" type="number" placeholder="Any" />
+          </div>
+          <div class="field-group">
+            <div class="field-label">Max Amount ($)</div>
+            <input class="field-input" type="number" placeholder="Any" />
+          </div>
+        </div>
+      </div>
+      <div class="drawer-section">
+        <div class="drawer-section-title">Action</div>
+        <div class="field-group">
+          <div class="field-label">Route to / Categorize as</div>
+          <input class="field-input" value="${prefill ? (prefill.action + (prefill.detail ? ' · ' + prefill.detail : '')) : ''}" placeholder="e.g. Income Split · Shopify config" />
+        </div>
+      </div>`;
+  }
+
+  function dismissSuggestion(idx) {
+    const el = document.getElementById('sug-' + idx);
+    el.style.transition = 'opacity .3s';
+    el.style.opacity = '0';
+    setTimeout(() => {
+      el.remove();
+      checkSuggestions();
+    }, 300);
+  }
+
+  function dismissAll() {
+    document.getElementById('suggestions').style.transition = 'opacity .3s';
+    document.getElementById('suggestions').style.opacity = '0';
+    setTimeout(() => document.getElementById('suggestions').remove(), 300);
+  }
+
+  function checkSuggestions() {
+    if (document.getElementById('suggestions-grid').children.length === 0) dismissAll();
+  }
+
+  function toggleStatus(checkbox, id) {
+    const row = checkbox.closest('tr');
+    row.dataset.status = checkbox.checked ? 'active' : 'paused';
+    filterTable();
+  }
+
+  function exportRules() { alert('Rules exported as CSV'); }
+  function updateClient() { /* would reload rules per client */ }
+</script>
+
+</body>
+</html>
