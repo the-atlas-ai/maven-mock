@@ -1,0 +1,1117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Atlas — Project Orchestrator Demo</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --s50:#f8fafc;--s100:#f1f5f9;--s200:#e2e8f0;--s300:#cbd5e1;--s400:#94a3b8;--s500:#64748b;--s600:#475569;--s700:#334155;--s800:#1e293b;--s900:#0f172a;
+  --i50:#eef2ff;--i100:#e0e7ff;--i500:#6366f1;--i600:#4f46e5;--i700:#4338ca;
+  --g50:#f0fdf4;--g100:#dcfce7;--g500:#22c55e;--g700:#15803d;
+  --a50:#fffbeb;--a100:#fef3c7;--a500:#f59e0b;--a700:#b45309;
+  --r50:#fff1f2;--r100:#ffe4e6;--r600:#dc2626;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:13px;background:var(--s50);color:var(--s900);display:flex;height:100vh;overflow:hidden}
+
+/* sidebar */
+.sidebar{width:220px;flex-shrink:0;background:white;border-right:1px solid var(--s200);display:flex;flex-direction:column;height:100vh}
+.sb-logo{padding:20px 20px 16px;border-bottom:1px solid var(--s100);display:flex;align-items:center;gap:10px}
+.sb-mark{width:30px;height:30px;background:linear-gradient(135deg,#6366f1,#4f46e5);border-radius:8px;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:13px}
+.sb-name{font-weight:700;font-size:15px}
+.sb-nav{padding:12px 10px;flex:1;overflow-y:auto}
+.nl{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--s400);padding:8px 10px 4px}
+.ni{display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:7px;color:var(--s500);font-size:13px;font-weight:500;cursor:pointer;border:none;background:none;width:100%;text-align:left;transition:background .12s,color .12s;text-decoration:none}
+.ni:hover{background:var(--s100);color:var(--s900)}
+.ni.active{background:var(--i50);color:var(--i600)}
+.sb-foot{padding:14px 16px;border-top:1px solid var(--s100);display:flex;align-items:center;gap:10px;flex-shrink:0}
+.sb-av{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#818cf8,#4f46e5);display:flex;align-items:center;justify-content:center;color:white;font-size:11px;font-weight:700;flex-shrink:0}
+
+/* main */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+.topbar{height:52px;background:white;border-bottom:1px solid var(--s200);display:flex;align-items:center;padding:0 20px;gap:10px;flex-shrink:0}
+.bc{font-size:12px;color:var(--s400);display:flex;align-items:center;gap:5px}
+.bc a{color:var(--s400);text-decoration:none}.bc a:hover{color:var(--i500)}
+.bcs{color:var(--s300)}.bcc{color:var(--s700);font-weight:600}
+.tbsp{flex:1}
+.demo-pill{font-size:11px;font-weight:600;padding:3px 9px;border-radius:9999px;background:var(--i100);color:var(--i600)}
+
+/* step nav */
+.step-nav{background:white;border-bottom:1px solid var(--s200);padding:0 28px;display:flex;align-items:center;height:54px;flex-shrink:0;overflow-x:auto}
+.step{display:flex;align-items:center;gap:7px;white-space:nowrap}
+.sc{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;border:2px solid var(--s200);background:white;color:var(--s400);transition:all .2s}
+.step.active .sc{background:var(--i600);border-color:var(--i600);color:white}
+.step.done .sc{background:var(--g500);border-color:var(--g500);color:white}
+.sn{font-size:12px;font-weight:500;color:var(--s400)}
+.step.active .sn{color:var(--i600);font-weight:600}
+.step.done .sn{color:var(--s500)}
+.conn{flex:1;height:2px;background:var(--s200);margin:0 10px;min-width:24px;transition:background .3s}
+.conn.done{background:var(--g500)}
+
+/* scene area + footer */
+.sa{flex:1;overflow-y:auto;padding:24px 28px}
+.scene{display:none;max-width:780px;margin:0 auto}
+.scene.active{display:block}
+.st{font-size:20px;font-weight:700;color:var(--s900);margin-bottom:4px}
+.ss{font-size:13px;color:var(--s500);margin-bottom:20px}
+.sf{height:64px;background:white;border-top:1px solid var(--s200);display:flex;align-items:center;justify-content:space-between;padding:0 28px;flex-shrink:0}
+.sfb{font-size:13px;font-weight:600;padding:8px 18px;border-radius:8px;cursor:pointer;border:1px solid var(--s200);background:white;color:var(--s600);transition:all .12s}
+.sfb:hover{border-color:var(--s300);color:var(--s900)}
+.sfb.p{background:var(--i600);border-color:var(--i600);color:white}
+.sfb.p:hover{background:var(--i700)}
+.sfb:disabled{opacity:.4;cursor:not-allowed}
+.sfc{font-size:12px;color:var(--s400);font-weight:500}
+
+/* ── SCENE 1 ── */
+.shortcuts{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px}
+.sco{background:white;border:2px solid var(--s200);border-radius:10px;padding:13px;cursor:pointer;transition:all .15s}
+.sco:hover{border-color:var(--i300,#a5b4fc)}
+.sco.sel{border-color:var(--i500);background:var(--i50)}
+.sco-em{font-size:18px;margin-bottom:7px}
+.sco-name{font-size:13px;font-weight:700;color:var(--s800);margin-bottom:2px}
+.sco-type{font-size:11px;color:var(--s400)}
+.sco-badge{font-size:10px;font-weight:600;padding:2px 7px;border-radius:9999px;margin-top:6px;display:inline-block}
+.sco-badge.simple{background:var(--g100);color:var(--g700)}
+.sco-badge.medium{background:var(--a100);color:var(--a700)}
+.sco-badge.complex{background:var(--r100);color:var(--r600)}
+.s1-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.card{background:white;border:1px solid var(--s200);border-radius:12px;padding:18px}
+.ct{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--s400);margin-bottom:14px}
+.fr{display:flex;flex-direction:column;gap:4px;margin-bottom:11px}
+.fr:last-child{margin-bottom:0}
+.fl{font-size:11px;font-weight:600;color:var(--s500)}
+.fv{font-size:13px;font-weight:500;color:var(--s900);background:var(--s50);border:1px solid var(--s200);border-radius:7px;padding:7px 10px;width:100%;transition:border-color .15s}
+select.fv{cursor:pointer;appearance:auto}
+.fv:focus{outline:none;border-color:var(--i500)}
+
+/* suggestion panel */
+.sug-panel{min-height:200px}
+.sug-empty{font-size:12px;color:var(--s400);padding:20px 0;font-style:italic}
+.sug-item{background:white;border:1px solid var(--s200);border-radius:9px;padding:11px 13px;margin-bottom:7px;opacity:0;transform:translateY(6px);transition:opacity .25s,transform .25s}
+.sug-item.vis{opacity:1;transform:translateY(0)}
+.sug-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:6px}
+.sug-left{display:flex;align-items:flex-start;gap:9px;flex:1}
+.sug-icon{font-size:16px;flex-shrink:0;margin-top:1px}
+.sug-body{flex:1}
+.sug-name{font-size:13px;font-weight:600;color:var(--s800)}
+.sug-reason{font-size:11px;color:var(--s400);margin-top:2px}
+.sug-pri{font-size:10px;font-weight:700;padding:2px 7px;border-radius:9999px;flex-shrink:0}
+.sug-pri.required{background:var(--r100);color:var(--r600)}
+.sug-pri.expected{background:var(--a100);color:var(--a700)}
+.sug-pri.optional{background:var(--s100);color:var(--s500)}
+.sug-actions{display:flex;gap:6px;flex-wrap:wrap}
+.sug-btn{font-size:11px;font-weight:600;padding:4px 9px;border-radius:6px;cursor:pointer;border:1px solid var(--s200);background:white;color:var(--s600);transition:all .12s;white-space:nowrap}
+.sug-btn:hover{border-color:var(--s300);color:var(--s900)}
+.sug-btn.active-connected{background:var(--g100);border-color:var(--g500);color:var(--g700)}
+.sug-btn.active-requested{background:var(--a100);border-color:var(--a500);color:var(--a700)}
+.sug-btn.active-na{background:var(--s100);border-color:var(--s300);color:var(--s400)}
+.ar{margin-top:16px;display:flex;justify-content:flex-end}
+.btnp{font-size:13px;font-weight:600;padding:9px 20px;border-radius:8px;cursor:pointer;border:none;background:var(--i600);color:white;display:flex;align-items:center;gap:7px;transition:background .12s}
+.btnp:hover{background:var(--i700)}
+.btnp:disabled{opacity:.4;cursor:not-allowed}
+
+/* ── SCENE 2: split planner ── */
+.plan-split{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
+.pcl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--s400);margin-bottom:9px;display:flex;align-items:center;justify-content:space-between}
+.pcb{font-size:11px;font-weight:600;background:var(--i50);color:var(--i600);padding:2px 8px;border-radius:9999px}
+.term{background:#0d1117;border-radius:10px;padding:15px 17px;font-family:'SF Mono','Fira Code','Menlo',monospace;font-size:12px;min-height:280px}
+.tl{margin-bottom:4px;display:flex;align-items:baseline;gap:6px;line-height:1.6}
+.tic{flex-shrink:0;width:14px;text-align:center}
+.tl.streaming .tic{color:#6e7681}.tl.streaming .tt{color:#e6edf3}
+.tl.added .tic{color:#3fb950}.tl.added .tt{color:#7ee787}
+.tl.skipped .tic{color:#484f58}.tl.skipped .tt{color:#484f58}
+.tl.flagged .tic{color:#d29922}.tl.flagged .tt{color:#d29922}
+.tcur{display:inline-block;width:7px;height:1em;background:#e6edf3;margin-left:1px;vertical-align:text-bottom;animation:bc .85s step-end infinite}
+@keyframes bc{0%,100%{opacity:1}50%{opacity:0}}
+.t-ok{color:#3fb950;font-family:'SF Mono','Fira Code','Menlo',monospace;font-size:12px;margin-top:8px;font-weight:600}
+.bp{display:flex;flex-direction:column;gap:6px;min-height:280px}
+.mp{background:white;border:1px solid var(--s200);border-radius:8px;padding:9px 12px;display:flex;align-items:center;gap:9px;opacity:0;transform:translateX(8px);transition:opacity .25s,transform .25s}
+.mp.vis{opacity:1;transform:translateX(0)}
+.mpd{width:7px;height:7px;border-radius:50%;background:var(--i400,#818cf8);flex-shrink:0}
+.mpd.cp{background:var(--a500)}
+.mpn{font-size:12px;font-weight:600;color:var(--s800);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mpbg{font-size:10px;font-weight:700;padding:1px 6px;border-radius:9999px;background:var(--a100);color:var(--a700);flex-shrink:0}
+
+/* ── SCENE 3 ── */
+.hint{background:var(--i50);border:1px solid var(--i100);border-radius:8px;padding:9px 14px;font-size:12px;color:var(--i600);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.sl{display:flex;flex-direction:column;gap:7px;margin-bottom:13px}
+.sk{background:white;border:1px solid var(--s200);border-radius:10px;padding:10px 13px;display:flex;align-items:center;gap:10px;user-select:none;transition:box-shadow .15s,border-color .15s}
+.sk:hover{border-color:var(--s300);box-shadow:0 2px 8px rgb(0 0 0/.06)}
+.sk.sortable-ghost{opacity:.4;background:var(--i50)}
+.sk.sortable-chosen{box-shadow:0 4px 16px rgb(0 0 0/.12);border-color:var(--i300,#a5b4fc)}
+.dh{display:flex;flex-direction:column;gap:2.5px;padding:3px;cursor:grab;flex-shrink:0;opacity:.3}
+.dh:active{cursor:grabbing}
+.sk:hover .dh{opacity:.7}
+.dhr{display:flex;gap:2.5px}
+.dhd{width:3px;height:3px;border-radius:50%;background:var(--s500)}
+.si{flex:1;min-width:0}
+.sknm{font-size:13px;font-weight:600;color:var(--s800);display:flex;align-items:center;gap:8px}
+.skdesc{font-size:11px;color:var(--s400);margin-top:2px}
+.skbg{font-size:10px;font-weight:700;padding:2px 7px;border-radius:9999px;background:var(--a100);color:var(--a700)}
+.rmb{width:24px;height:24px;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;border:1px solid transparent;background:none;color:var(--s300);font-size:15px;transition:all .12s;flex-shrink:0;opacity:0}
+.sk:hover .rmb{opacity:1}
+.rmb:hover{background:var(--r50);border-color:var(--r100);color:var(--r600)}
+.add-wrap{position:relative;margin-bottom:16px}
+.addb{font-size:12px;font-weight:600;padding:7px 13px;border-radius:8px;cursor:pointer;border:1px dashed var(--s300);background:white;color:var(--s500);display:flex;align-items:center;gap:6px}
+.addb:hover{border-color:var(--i400);color:var(--i600);background:var(--i50)}
+.addm{position:absolute;top:calc(100% + 6px);left:0;background:white;border:1px solid var(--s200);border-radius:10px;box-shadow:0 8px 24px rgb(0 0 0/.12);z-index:10;min-width:260px;overflow:hidden;display:none}
+.addm.open{display:block}
+.ami{padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--s100);transition:background .1s}
+.ami:last-child{border-bottom:none}
+.ami:hover{background:var(--i50)}
+.ami.used{opacity:.4;cursor:not-allowed;pointer-events:none}
+.amn{font-size:13px;font-weight:600;color:var(--s800)}
+.amd{font-size:11px;color:var(--s400);margin-top:1px}
+.approw{display:flex;justify-content:flex-end}
+.appbtn{font-size:13px;font-weight:600;padding:9px 20px;border-radius:8px;cursor:pointer;border:none;background:var(--g500);color:white;display:flex;align-items:center;gap:7px}
+.appbtn:hover{background:#16a34a}
+.appbtn.done{background:var(--g700);cursor:default}
+
+/* ── SCENE 4 ── */
+.exh{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.exl{display:flex;flex-direction:column}
+.exi{display:flex;align-items:flex-start;gap:14px;padding:11px 0;border-bottom:1px solid var(--s100)}
+.exi:last-child{border-bottom:none}
+.exs{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:13px;margin-top:1px}
+.exs.pending{background:var(--s100);color:var(--s400)}
+.exs.running{background:var(--i100);color:var(--i600);animation:pr 1.5s ease-in-out infinite}
+.exs.done{background:var(--g100);color:var(--g700)}
+.exs.warning{background:var(--a100);color:var(--a700)}
+.exs.waiting{background:var(--a50);border:2px solid var(--a100);color:var(--a700)}
+@keyframes pr{0%,100%{box-shadow:0 0 0 0 rgb(99 102 241/.3)}50%{box-shadow:0 0 0 6px rgb(99 102 241/0)}}
+.exb{flex:1}
+.exn{font-size:13px;font-weight:600;color:var(--s800)}
+.exd{font-size:11px;color:var(--s400);margin-top:1px}
+.exnt{font-size:11px;margin-top:5px;padding:4px 8px;border-radius:5px;border-left:2px solid var(--s300);background:var(--s50);color:var(--s500)}
+.exnt.warn{border-left-color:var(--a500);background:var(--a50);color:var(--a700)}
+.exnt.ok{border-left-color:var(--g500);background:var(--g50);color:var(--g700)}
+.excpbg{font-size:10px;font-weight:700;padding:2px 7px;border-radius:9999px;background:var(--a100);color:var(--a700);margin-left:8px}
+.stbtn{font-size:13px;font-weight:600;padding:9px 20px;border-radius:8px;cursor:pointer;border:none;background:var(--i600);color:white}
+.stbtn:hover{background:var(--i700)}
+.stbtn:disabled{opacity:.5;cursor:not-allowed}
+.cpbanner{background:var(--a50);border:1px solid var(--a100);border-radius:10px;padding:14px 16px;margin-top:14px;display:none;align-items:center;gap:12px}
+.cpbanner.vis{display:flex}
+.cpicon{font-size:20px}
+.cptitle{font-size:13px;font-weight:700;color:var(--a700)}
+.cpdesc{font-size:12px;color:var(--a700);margin-top:2px}
+
+/* ── SCENE 5 ── */
+.rv-grid{display:grid;grid-template-columns:3fr 2fr;gap:16px}
+.rv-items{display:flex;flex-direction:column;gap:9px}
+.fi{background:white;border:1px solid var(--s200);border-radius:10px;padding:12px 14px;transition:border-color .15s}
+.fi.res{border-color:var(--g500);opacity:.7}
+.fih{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:5px}
+.fit{font-size:13px;font-weight:600;color:var(--s800);flex:1}
+.fid{font-size:12px;color:var(--s500);line-height:1.5}
+.resbtn{font-size:11px;font-weight:600;padding:4px 10px;border-radius:6px;cursor:pointer;border:1px solid var(--s200);background:white;color:var(--s600);white-space:nowrap;flex-shrink:0;transition:all .12s}
+.resbtn:hover{border-color:var(--g500);color:var(--g700)}
+.resbtn.done{background:var(--g100);border-color:var(--g500);color:var(--g700);cursor:default}
+.sum-card{background:white;border:1px solid var(--s200);border-radius:10px;padding:15px;position:sticky;top:0}
+.sumt{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--s400);margin-bottom:11px}
+.sumr{display:flex;justify-content:space-between;align-items:baseline;padding:6px 0;border-bottom:1px solid var(--s100)}
+.sumr:last-child{border-bottom:none}
+.suml{font-size:12px;color:var(--s500)}
+.sumv{font-size:13px;font-weight:700;color:var(--s900)}
+.sumv.hi{color:var(--i600)}
+.arow{margin-top:16px}
+
+/* ── SCENE 6 ── */
+.f6hero{text-align:center;padding:22px 0 16px}
+.f6icon{width:58px;height:58px;background:var(--g100);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;margin:0 auto 12px}
+.f6title{font-size:22px;font-weight:800;color:var(--s900);margin-bottom:5px}
+.f6sub{font-size:13px;color:var(--s500)}
+.f6ents{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:16px 0}
+.f6ec{background:white;border:1px solid var(--g500);border-radius:10px;padding:11px;text-align:center}
+.f6eck{font-size:16px;margin-bottom:4px}
+.f6ecn{font-size:12px;font-weight:700;color:var(--s700);margin-bottom:2px}
+.f6ecc{font-size:10px;color:var(--s400);font-family:monospace}
+.f6stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px}
+.f6sc{background:white;border:1px solid var(--s200);border-radius:10px;padding:13px}
+.f6sl{font-size:11px;color:var(--s400);font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px}
+.f6sv{font-size:19px;font-weight:800;color:var(--s900)}
+.f6ss{font-size:11px;color:var(--s400);margin-top:2px}
+.f6acts{display:flex;gap:10px;justify-content:center}
+.f6btn{font-size:13px;font-weight:600;padding:9px 20px;border-radius:8px;cursor:pointer;border:1px solid var(--s200);background:white;color:var(--s600)}
+.f6btn.prim{background:var(--i600);border-color:var(--i600);color:white}
+.f6btn.prim:hover{background:var(--i700)}
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+  <div class="sb-logo"><div class="sb-mark">A</div><span class="sb-name">Atlas</span></div>
+  <nav class="sb-nav">
+    <div class="nl">Workspace</div>
+    <a href="index.html" class="ni"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 20 20"><rect x="2" y="2" width="7" height="7" rx="1.5"/><rect x="11" y="2" width="7" height="7" rx="1.5"/><rect x="2" y="11" width="7" height="7" rx="1.5"/><rect x="11" y="11" width="7" height="7" rx="1.5"/></svg>Dashboard</a>
+    <a href="clients-list.html" class="ni"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 20 20"><circle cx="10" cy="7" r="3.5"/><path d="M2 17c0-3.3 3.6-6 8-6s8 2.7 8 6"/></svg>Clients</a>
+    <a href="projects-list.html" class="ni active"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 20 20"><path d="M3 5h14M3 10h14M3 15h8"/></svg>Projects</a>
+  </nav>
+  <div class="sb-foot"><div class="sb-av">NP</div><div><div style="font-size:13px;font-weight:600">Neeraj P.</div><div style="font-size:11px;color:var(--s400)">CPA · Atlas</div></div></div>
+</div>
+
+<div class="main">
+  <div class="topbar">
+    <div class="bc"><a href="projects-list.html">Projects</a><span class="bcs">›</span><span class="bcc" id="tb-client">New Project</span><span class="bcs">›</span><span class="bcc">Tax Prep 2024</span></div>
+    <div class="tbsp"></div>
+    <span class="demo-pill">✦ Orchestrator Demo</span>
+  </div>
+  <div class="step-nav" id="step-nav"></div>
+
+  <div class="sa">
+
+    <!-- Scene 1 -->
+    <div class="scene active" id="scene-1">
+      <div class="st">New Tax Project</div>
+      <div class="ss">Pick a demo client to watch data sources get identified — or fill in the profile manually below.</div>
+      <div class="shortcuts">
+        <div class="sco" id="sco-mesa" onclick="useShortcut('mesa')">
+          <div class="sco-em">🍽️</div>
+          <div class="sco-name">Mesa Verde Restaurant</div>
+          <div class="sco-type">3 LLCs · QuickBooks + Payroll</div>
+          <span class="sco-badge medium">Medium</span>
+        </div>
+        <div class="sco" id="sco-sarah" onclick="useShortcut('sarah')">
+          <div class="sco-em">📸</div>
+          <div class="sco-name">Sarah Chen Photography</div>
+          <div class="sco-type">Sole Proprietor · Bank CSV only</div>
+          <span class="sco-badge simple">Simple</span>
+        </div>
+        <div class="sco" id="sco-bloom" onclick="useShortcut('bloom')">
+          <div class="sco-em">🛍️</div>
+          <div class="sco-name">Bloom &amp; Co. eCommerce</div>
+          <div class="sco-type">S-Corp · Shopify + Stripe</div>
+          <span class="sco-badge complex">Complex</span>
+        </div>
+      </div>
+      <div class="s1-grid">
+        <div class="card">
+          <div class="ct">Client Profile</div>
+          <div class="fr"><div class="fl">Business Name</div><input class="fv" id="f-name" placeholder="e.g. Acme Corp" oninput="onProfileChange()"></div>
+          <div class="fr"><div class="fl">Business Type</div>
+            <select class="fv" id="f-btype" onchange="onProfileChange()">
+              <option value="">Select type…</option>
+              <option value="restaurant">Restaurant / Food &amp; Beverage</option>
+              <option value="photography">Photography / Creative Services</option>
+              <option value="ecommerce">eCommerce / Online Retail</option>
+              <option value="consulting">Consulting / Professional Services</option>
+              <option value="retail">Retail / Brick &amp; Mortar</option>
+            </select>
+          </div>
+          <div class="fr"><div class="fl">Entity Structure</div>
+            <select class="fv" id="f-entity" onchange="onProfileChange()">
+              <option value="">Select structure…</option>
+              <option value="sole-prop">Sole Proprietor</option>
+              <option value="single-llc">Single-member LLC</option>
+              <option value="multi-llc">Multi-entity LLC (2+)</option>
+              <option value="s-corp">S-Corporation</option>
+              <option value="c-corp">C-Corporation</option>
+            </select>
+          </div>
+          <div class="fr"><div class="fl">Annual Revenue</div>
+            <select class="fv" id="f-rev" onchange="onProfileChange()">
+              <option value="">Select range…</option>
+              <option value="under100k">Under $100K</option>
+              <option value="100k-500k">$100K – $500K</option>
+              <option value="500k-2m">$500K – $2M</option>
+              <option value="over2m">Over $2M</option>
+            </select>
+          </div>
+          <div class="fr"><div class="fl">Tax Year</div><select class="fv" id="f-year"><option>2024</option><option>2023</option></select></div>
+        </div>
+        <div class="card">
+          <div class="ct" style="display:flex;justify-content:space-between;align-items:center">
+            Suggested Data Sources
+            <span style="font-size:10px;font-weight:500;color:var(--s400);text-transform:none;letter-spacing:0">auto-identified from profile</span>
+          </div>
+          <div id="sug-panel"><div class="sug-empty">Fill in the profile to see suggested data sources.</div></div>
+        </div>
+      </div>
+      <div class="ar">
+        <button class="btnp" id="gen-btn" onclick="goToScene(2)" disabled>
+          Generate Plan
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 16 16"><path d="M3 8h10M9 4l4 4-4 4"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Scene 2 -->
+    <div class="scene" id="scene-2">
+      <div class="st">Generating Project Plan</div>
+      <div class="ss">Each reasoning step drives a decision — sources connected shape which phases are built.</div>
+      <div class="plan-split">
+        <div><div class="pcl">AI Reasoning</div><div class="term" id="terminal"></div></div>
+        <div>
+          <div class="pcl">Plan Being Built <span class="pcb" id="pcb">0 phases</span></div>
+          <div class="bp" id="bp"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Scene 3 -->
+    <div class="scene" id="scene-3">
+      <div class="st">Review &amp; Edit Your Plan</div>
+      <div class="ss">Drag to reorder. Click × to remove. Add phases for anything missing.</div>
+      <div class="hint" id="s3hint"></div>
+      <div class="sl" id="phase-list"></div>
+      <div class="add-wrap" id="add-wrap">
+        <button class="addb" onclick="toggleAdd()">
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 16 16"><path d="M8 3v10M3 8h10"/></svg>Add Phase
+        </button>
+        <div class="addm" id="addm"></div>
+      </div>
+      <div class="approw"><button class="appbtn" id="appbtn" onclick="approvePlan()"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 16 16"><path d="M3 8l4 4 6-7"/></svg>Approve Plan</button></div>
+    </div>
+
+    <!-- Scene 4 -->
+    <div class="scene" id="scene-4">
+      <div class="exh">
+        <div><div class="st">Executing Project Plan</div><div class="ss">Phases run in sequence. Checkpoints pause for human judgment.</div></div>
+        <button class="stbtn" id="stbtn" onclick="startExec()">Start Execution</button>
+      </div>
+      <div class="exl" id="exec-list"></div>
+      <div class="cpbanner" id="cpbanner">
+        <div class="cpicon">⏸</div>
+        <div><div class="cptitle">Checkpoint — CPA Review</div><div class="cpdesc">Automated phases complete. Items flagged for your review before filing.</div></div>
+      </div>
+    </div>
+
+    <!-- Scene 5 -->
+    <div class="scene" id="scene-5">
+      <div class="st">CPA Review</div>
+      <div class="ss">Resolve all flagged items before approving the return for filing.</div>
+      <div class="rv-grid">
+        <div class="rv-items" id="rv-items"></div>
+        <div><div class="sum-card" id="sum-card"></div></div>
+      </div>
+      <div class="arow"><button class="btnp" id="appall" onclick="goToScene(6)" disabled style="opacity:.4;cursor:not-allowed">Approve &amp; Proceed to Filing →</button></div>
+    </div>
+
+    <!-- Scene 6 -->
+    <div class="scene" id="scene-6">
+      <div class="f6hero">
+        <div class="f6icon">✓</div>
+        <div class="f6title">Returns Filed</div>
+        <div class="f6sub" id="f6sub"></div>
+      </div>
+      <div class="f6ents" id="f6ents"></div>
+      <div class="f6stats">
+        <div class="f6sc"><div class="f6sl">Effective Tax Rate</div><div class="f6sv" id="s6r">—</div><div class="f6ss" id="s6rs"></div></div>
+        <div class="f6sc"><div class="f6sl">Total Deductions</div><div class="f6sv" id="s6d">—</div><div class="f6ss" id="s6ds"></div></div>
+        <div class="f6sc"><div class="f6sl">Phases Completed</div><div class="f6sv" id="s6p">—</div><div class="f6ss">Including 1 human checkpoint</div></div>
+        <div class="f6sc"><div class="f6sl">Time vs. Manual</div><div class="f6sv" id="s6t">—</div><div class="f6ss" id="s6ts"></div></div>
+      </div>
+      <div class="f6acts">
+        <button class="f6btn">Download Returns</button>
+        <button class="f6btn">View Audit Trail</button>
+        <button class="f6btn prim" onclick="resetDemo()">Start New Project</button>
+      </div>
+    </div>
+
+  </div><!-- .sa -->
+
+  <div class="sf">
+    <button class="sfb" id="prev-btn" onclick="prevScene()">← Back</button>
+    <span class="sfc" id="scene-ctr">Scene 1 of 6</span>
+    <button class="sfb p" id="next-btn" onclick="nextScene()" disabled>Continue →</button>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+<script>
+// ═══════════════════════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════════════════════
+
+// All possible data source types the system can suggest
+const DS_CATALOG = {
+  'bank':       { icon:'🏦', name:'Bank Statements',              pri:'required' },
+  'prior':      { icon:'📄', name:'Prior Year Return',            pri:'required' },
+  'accounting': { icon:'📊', name:'QuickBooks / Accounting Software', pri:'expected' },
+  'pos':        { icon:'💳', name:'POS System (Square / Toast)',  pri:'expected' },
+  '1099k':      { icon:'💰', name:'1099-K (Payment Processor)',   pri:'required' },
+  'payroll':    { icon:'👥', name:'Payroll Provider (ADP / Gusto)', pri:'expected' },
+  'shopify':    { icon:'🛍️', name:'eCommerce Platform (Shopify)', pri:'required'  },
+  'stripe':     { icon:'💳', name:'Payment Processor (Stripe)',   pri:'required'  },
+  'invoicing':  { icon:'📋', name:'Invoicing Tool (FreshBooks / Wave)', pri:'optional' },
+  'payapp':     { icon:'📱', name:'Payment Apps (PayPal / Venmo)', pri:'expected' },
+  'shareholder':{ icon:'📋', name:'Shareholder Agreements',       pri:'required'  },
+  'opagree':    { icon:'📋', name:'Operating Agreements',         pri:'required'  },
+};
+
+// Rules: which sources to suggest based on profile
+function computeSuggestions(btype, entity, rev) {
+  const ids = [];
+  const reasons = {};
+
+  if (!btype) return [];
+
+  // Always
+  ids.push('bank');    reasons['bank']  = 'Required for any business tax return';
+  ids.push('prior');   reasons['prior'] = 'Needed to carry forward deductions and basis';
+
+  if (btype === 'restaurant') {
+    if (rev === '500k-2m' || rev === 'over2m') {
+      ids.push('accounting'); reasons['accounting'] = 'Standard for restaurants at this revenue level';
+    }
+    ids.push('pos');   reasons['pos']   = 'Sales reconciliation from Square, Toast, or Clover';
+    ids.push('1099k'); reasons['1099k'] = 'Required if processing card payments over $600';
+  }
+  if (btype === 'photography') {
+    ids.push('invoicing'); reasons['invoicing'] = 'FreshBooks or Wave for tracking client billings';
+    ids.push('payapp');    reasons['payapp']    = 'PayPal or Venmo often used for smaller client payments';
+  }
+  if (btype === 'ecommerce') {
+    ids.push('shopify');   reasons['shopify']   = 'Primary sales channel — payout reconciliation required';
+    ids.push('stripe');    reasons['stripe']    = 'Subscription payments need separate reconciliation';
+    ids.push('accounting');reasons['accounting']= 'High transaction volume requires dedicated accounting';
+  }
+  if (btype === 'consulting' || btype === 'retail') {
+    ids.push('invoicing'); reasons['invoicing'] = 'Billing tool for tracking client engagements';
+    if (rev === '500k-2m' || rev === 'over2m') {
+      ids.push('accounting'); reasons['accounting'] = 'Recommended at this revenue level';
+    }
+  }
+
+  if (entity === 'multi-llc') {
+    ids.push('payroll');  reasons['payroll'] = 'W2 employees expected in multi-entity structure';
+    ids.push('opagree');  reasons['opagree'] = 'Required for multi-entity filing and allocations';
+  }
+  if (entity === 's-corp') {
+    ids.push('payroll');     reasons['payroll']     = 'Officer salary required for S-Corp compliance';
+    ids.push('shareholder'); reasons['shareholder'] = 'Needed for K-1 distribution verification';
+  }
+  if (entity === 'c-corp') {
+    ids.push('payroll'); reasons['payroll'] = 'Corporate payroll required for employees';
+  }
+
+  // dedupe while preserving order
+  const seen = new Set();
+  return ids.filter(id => seen.has(id) ? false : seen.add(id)).map(id => ({
+    id, ...DS_CATALOG[id], reason: reasons[id]
+  }));
+}
+
+// Phase catalog — all possible phases
+const PC = {
+  'gather':     { name:'Gather & Validate Documents',        desc:'Collect required tax documents and validate completeness',    cp:false, nt:'warn', dur:1500 },
+  'import-qb':  { name:'Import Financial Data',              desc:'Pull P&L and balance sheet from accounting software',         cp:false, nt:'ok',   dur:1800 },
+  'import-bank':{ name:'Import Bank Transactions',           desc:'Parse and import business transactions from bank CSV',        cp:false, nt:'ok',   dur:1500 },
+  'recon-shop': { name:'Reconcile Shopify Payouts',          desc:'Match Shopify payouts to bank deposits',                     cp:false, nt:'warn', dur:2500 },
+  'recon-str':  { name:'Reconcile Stripe Payouts',           desc:'Match Stripe subscription payouts to bank deposits',         cp:false, nt:'ok',   dur:2000 },
+  'recon-pay':  { name:'Reconcile Payroll W2/W3',            desc:'Cross-check payroll provider data against W3 totals',        cp:false, nt:'warn', dur:2000 },
+  'categorize': { name:'Categorize Transactions',            desc:'Classify transactions across all sources',                   cp:false, nt:'ok',   dur:2500 },
+  'deprec':     { name:'Carry Forward Depreciation',         desc:'Import depreciation schedules from prior year return',       cp:false, nt:'ok',   dur:1200 },
+  'compute-sc': { name:'Compute Schedule C',                 desc:'Calculate net profit and self-employment tax',               cp:false, nt:'ok',   dur:1200 },
+  'compute-llc':{ name:'Compute Tax Liability',              desc:'Calculate federal and state tax',                            cp:false, nt:'ok',   dur:2500 },
+  'compute-sc2':{ name:'Compute S-Corp Tax',                 desc:'Calculate entity-level taxes',                               cp:false, nt:'ok',   dur:2500 },
+  'compute-k1': { name:'Compute K-1 Distributions',          desc:'Allocate income and losses to shareholders',                 cp:false, nt:'warn', dur:2000 },
+  'flag':       { name:'Flag Deductions & Anomalies',        desc:'Identify unusual items and missed deductions',               cp:false, nt:'ok',   dur:1500 },
+  'cli-sign':   { name:'Client Sign-off',                    desc:'Client reviews draft return and approves',                   cp:true,  nt:'',     dur:0    },
+  'cpa-rev':    { name:'CPA Review',                         desc:'CPA reviews flagged items and approves final return',        cp:true,  nt:'',     dur:0    },
+  'efile':      { name:'E-File Returns',                     desc:'Submit returns electronically to tax authorities',           cp:false, nt:'ok',   dur:2000 },
+};
+
+// Dynamic plan generator — takes profile + source statuses → steps + phases
+function generatePlan(btype, entity, sourceStatuses) {
+  const steps = [], phaseIds = [];
+  const has = id => sourceStatuses[id] === 'connected';
+
+  // 1. Gather docs (always)
+  const entityLabel = entity === 'multi-llc' ? 'Multi-entity LLC' : entity === 's-corp' ? 'S-Corporation' : entity === 'sole-prop' ? 'Sole proprietor' : 'Business';
+  steps.push({ text: entityLabel + ' detected — gathering and validating documents...', type:'add', pid:'gather' });
+  phaseIds.push('gather');
+
+  // 2. Financial data import
+  if (has('accounting') || has('shopify')) {
+    steps.push({ text: 'Accounting software connected — importing P&L and balance sheet...', type:'add', pid:'import-qb' });
+    phaseIds.push('import-qb');
+  } else {
+    steps.push({ text: 'No accounting software — importing directly from bank CSV...', type:'add', pid:'import-bank' });
+    phaseIds.push('import-bank');
+  }
+
+  // 3. eCommerce reconciliation
+  if (has('shopify')) {
+    steps.push({ text: 'Shopify connected — payout reconciliation required...', type:'add', pid:'recon-shop' });
+    phaseIds.push('recon-shop');
+  }
+  if (has('stripe')) {
+    steps.push({ text: 'Stripe connected — separate reconciliation pass needed...', type:'add', pid:'recon-str' });
+    phaseIds.push('recon-str');
+  }
+
+  // 4. High volume categorization
+  if (has('shopify') || has('stripe') || has('pos')) {
+    steps.push({ text: 'Multiple transaction sources — dedicated categorization phase...', type:'add', pid:'categorize' });
+    phaseIds.push('categorize');
+  }
+
+  // 5. Payroll
+  if (has('payroll')) {
+    steps.push({ text: 'Payroll provider connected — W2/W3 reconciliation required...', type:'add', pid:'recon-pay' });
+    phaseIds.push('recon-pay');
+  } else if (['multi-llc','s-corp','c-corp'].includes(entity)) {
+    steps.push({ text: 'No payroll data connected — skipping W2/W3 reconciliation...', type:'skip', pid:null });
+  }
+
+  // 6. Depreciation
+  if (has('prior')) {
+    steps.push({ text: 'Prior year return found — carrying forward depreciation schedules...', type:'add', pid:'deprec' });
+    phaseIds.push('deprec');
+  }
+
+  // 7. Tax computation by entity
+  if (entity === 'sole-prop') {
+    steps.push({ text: 'Schedule C filing — computing net profit and self-employment tax...', type:'add', pid:'compute-sc' });
+    phaseIds.push('compute-sc');
+  } else if (entity === 's-corp') {
+    steps.push({ text: 'S-Corp entity-level tax computation...', type:'add', pid:'compute-sc2' });
+    phaseIds.push('compute-sc2');
+    if (!has('shareholder')) {
+      steps.push({ text: 'Shareholder agreements not found — K-1 allocation at risk...', type:'flag', pid:null });
+    }
+    steps.push({ text: 'Computing K-1 distributions for shareholders...', type:'add', pid:'compute-k1' });
+    phaseIds.push('compute-k1');
+  } else {
+    const n = entity === 'multi-llc' ? ' × multiple entities' : '';
+    steps.push({ text: 'Computing tax liability' + n + '...', type:'add', pid:'compute-llc' });
+    phaseIds.push('compute-llc');
+  }
+
+  // 8. Flag deductions
+  steps.push({ text: 'Scanning for deductions and anomalies...', type:'add', pid:'flag' });
+  phaseIds.push('flag');
+
+  // 9. Missing required sources — flag
+  ['1099k','shopify','shareholder'].forEach(id => {
+    if (sourceStatuses[id] === 'requested') {
+      const name = DS_CATALOG[id]?.name || id;
+      steps.push({ text: name + ' not received — flagging before books are closed...', type:'flag', pid:null });
+    }
+  });
+
+  // 10. Checkpoints
+  if (entity !== 'sole-prop') {
+    steps.push({ text: 'Adding client approval checkpoint...', type:'add', pid:'cli-sign' });
+    phaseIds.push('cli-sign');
+  }
+  steps.push({ text: 'Adding CPA review checkpoint before filing...', type:'add', pid:'cpa-rev' });
+  phaseIds.push('cpa-rev');
+  steps.push({ text: 'Finalizing with electronic filing...', type:'add', pid:'efile' });
+  phaseIds.push('efile');
+
+  const phases = phaseIds.map(id => ({ id, ...PC[id], note: PC[id].nt === 'ok' ? '✓ Completed' : '⚠ Item flagged for review', status:'pending' }));
+  return { steps, phases };
+}
+
+// Per-shortcut extra data (flagged items, summary, filed entities, stats)
+const SHORTCUT_DATA = {
+  mesa: {
+    form: { name:'Mesa Verde Restaurant Group', btype:'restaurant', entity:'multi-llc', rev:'500k-2m' },
+    sources: { bank:'connected', prior:'connected', accounting:'connected', pos:'requested', '1099k':'requested', payroll:'connected', opagree:'connected' },
+    sourceReasons: { pos:'Square POS used — payout reconciliation required', '1099k':'Required if processing card payments', opagree:'3 separate LLCs require operating agreements' },
+    hint: 'Try removing <em>Client Sign-off</em> (this CPA handles it directly) and adding <em>State Returns × 3</em>.',
+    extra: [{ id:'state-ret', name:'State Returns × 3', desc:'File CA FTB state returns — one per LLC' }],
+    flagged: [
+      { id:'w2',      icon:'⚠️', t:'W2 Mismatch — Mesa Verde Downtown LLC',       d:'Line 3 (Social Security Wages) differs by $240 between W2 and W3 totals. Confirm and correct before filing.' },
+      { id:'dep',     icon:'ℹ️', t:'Depreciation — Verify Section 179 Election',  d:'$45,200 carried from 2023. Confirm Section 179 election for restaurant equipment ($12,400) is still valid for 2024.' },
+      { id:'meals',   icon:'💡', t:'Potential Deduction — Meals & Entertainment', d:'$8,400 in meals expenses. 50% deductible for documented business meals. Confirm receipts are on file.' },
+      { id:'xfer',    icon:'⚠️', t:'Unusual Inter-Company Transfer — $45,000',   d:'Transfer between Westside LLC and Airport LLC in Nov 2024. Confirm documented as loan or equity contribution.' },
+    ],
+    summary: [['Entities','3 LLCs'],['Total Income','$1,240,000'],['Deductions','$312,000'],['Depreciation','$45,200'],['Tax Liability','$228,160'],['Effective Rate','18.4%',true]],
+    ents: [{ n:'Mesa Verde Downtown LLC', c:'IRS #TX2024-8821-A' },{ n:'Mesa Verde Westside LLC', c:'IRS #TX2024-8821-B' },{ n:'Mesa Verde Airport LLC', c:'IRS #TX2024-8821-C' }],
+    stats: { r:'18.4%', rs:'Combined across 3 entities', d:'$312,000', ds:'Including $45,200 depreciation', t:'2h 14m', ts:'vs. 7–9h manually' },
+  },
+  sarah: {
+    form: { name:'Sarah Chen Photography', btype:'photography', entity:'sole-prop', rev:'100k-500k' },
+    sources: { bank:'connected', prior:'connected', invoicing:'na', payapp:'connected' },
+    sourceReasons: { invoicing:'FreshBooks not used — bank CSV covers all income', payapp:'PayPal used for client payments' },
+    hint: 'Lean plan — try adding <em>Estimated Tax Calculation</em> so Sarah knows her 2025 quarterly payments.',
+    extra: [{ id:'est-tax', name:'Estimated Tax Calculation', desc:'Calculate 2025 quarterly estimated payments' },{ id:'ny-ret', name:'New York State Return', desc:'File NY personal income tax return' }],
+    flagged: [
+      { id:'hoff',  icon:'💡', t:'Home Office Deduction — 240 sq ft',        d:'Photography studio is 20% of apartment (240/1,200 sq ft). Eligible for ~$3,840 deduction. Confirm exclusive business use.' },
+      { id:'miles', icon:'💡', t:'Vehicle Mileage — 4,200 miles logged',     d:'4,200 miles for client shoots and transport. At $0.67/mile = $2,814 deduction. Confirm mileage log is documented.' },
+    ],
+    summary: [['Entity','Sole Proprietor'],['Gross Income','$96,000'],['Deductions','$27,600'],['Depreciation','$2,400'],['Tax Liability','$18,240'],['Effective Rate','19.0%',true]],
+    ents: [{ n:'Sarah Chen — Schedule C', c:'IRS #SC2024-4412' }],
+    stats: { r:'19.0%', rs:'After all Schedule C deductions', d:'$27,600', ds:'Including $2,400 depreciation', t:'48m', ts:'vs. 3–4h manually' },
+  },
+  bloom: {
+    form: { name:'Bloom & Co. eCommerce', btype:'ecommerce', entity:'s-corp', rev:'over2m' },
+    sources: { bank:'connected', prior:'connected', shopify:'connected', stripe:'connected', accounting:'connected', payroll:'connected', shareholder:'requested' },
+    sourceReasons: { shareholder:'Required for K-1 allocation verification — request from client' },
+    hint: 'Try adding <em>Shareholder Basis Schedules</em> — required for correct K-1 loss limitation treatment.',
+    extra: [{ id:'basis', name:'Shareholder Basis Schedules', desc:'Prepare updated basis schedules for both shareholders' },{ id:'officer', name:'Officer Compensation Review', desc:'Document reasonable compensation analysis' }],
+    flagged: [
+      { id:'k1',    icon:'⚠️', t:'K-1 Allocation — Shareholder Agreement Missing', d:'50/50 split assumed for 2 shareholders. Confirm this matches the operating agreement. Incorrect allocation can trigger IRS scrutiny.' },
+      { id:'shdsc', icon:'⚠️', t:'Shopify Payout Discrepancy — 2 Items',           d:'2 payouts totaling $3,240 do not match bank records. Likely timing differences. Verify and document.' },
+      { id:'basis', icon:'ℹ️', t:'Shareholder Basis Calculation Required',         d:'Both shareholders need updated basis schedules for correct loss limitation and distribution tax treatment.' },
+      { id:'meals', icon:'💡', t:'Business Meals Deduction — $14,200',             d:'$14,200 in meals expenses. 50% deductible. Confirm all are documented business meals, not personal.' },
+      { id:'comp',  icon:'⚠️', t:'Reasonable Officer Compensation Check',          d:'Officer salary at $95K on $1.54M revenue. IRS scrutinizes officer comp in S-Corps. Confirm this is defensible.' },
+    ],
+    summary: [['Entity','S-Corp (2 shareholders)'],['Total Revenue','$1,540,000'],['Deductions','$480,000'],['Depreciation','$78,500'],['Tax Liability','$196,200'],['Effective Rate','12.7%',true]],
+    ents: [{ n:'Bloom & Co. Inc. (Form 1120-S)', c:'IRS #1120S-2024-7741' },{ n:'K-1 — Priya Sharma (50%)', c:'Schedule K-1 issued' },{ n:'K-1 — David Lin (50%)', c:'Schedule K-1 issued' }],
+    stats: { r:'12.7%', rs:'S-Corp pass-through effective rate', d:'$480,000', ds:'Including $78,500 depreciation', t:'4h 22m', ts:'vs. 14–18h manually' },
+  },
+};
+
+// ═══════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════
+let curScene = 1;
+let activeShortcut = null;
+let sourceStatuses = {};   // id -> 'connected'|'requested'|'na'
+let generatedSteps = [];
+let phases = [];
+let planApproved = false;
+let execDone = false;
+let resolved = new Set();
+let sortInst = null;
+let shownSugIds = new Set();
+let sugQueue = [];
+let sugAnimRunning = false;
+
+// ═══════════════════════════════════════════════════════════
+// STEP NAV
+// ═══════════════════════════════════════════════════════════
+const STEPS = ['Onboard','Plan','Edit','Execute','Review','Filed'];
+function renderStepNav() {
+  document.getElementById('step-nav').innerHTML = STEPS.map((n,i) => {
+    const k = i+1, cls = k < curScene ? 'done' : k === curScene ? 'active' : '';
+    return `<div class="step ${cls}"><span class="sc">${k < curScene ? '✓' : k}</span><span class="sn">${n}</span></div>${i < 5 ? `<div class="conn ${k < curScene ? 'done':''}"></div>` : ''}`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════════════════
+function goToScene(n) {
+  document.querySelectorAll('.scene').forEach(s => s.classList.remove('active'));
+  document.getElementById('scene-'+n).classList.add('active');
+  curScene = n; renderStepNav(); updateFooter(); onEnter(n);
+}
+function nextScene() { if (curScene < 6) goToScene(curScene+1); }
+function prevScene() { if (curScene > 1) goToScene(curScene-1); }
+function updateFooter() {
+  document.getElementById('scene-ctr').textContent = 'Scene '+curScene+' of 6';
+  document.getElementById('prev-btn').disabled = curScene === 1;
+  const nb = document.getElementById('next-btn');
+  if (curScene === 6) { nb.style.display='none'; return; }
+  nb.style.display='';
+  nb.disabled = (
+    (curScene===2) ||
+    (curScene===3 && !planApproved) ||
+    (curScene===4 && !execDone) ||
+    (curScene===5 && resolved.size < (activeShortcut ? SHORTCUT_DATA[activeShortcut].flagged.length : 2))
+  );
+  if (curScene===1) nb.disabled = false;
+}
+function onEnter(n) {
+  if (n===1) initS1(); if (n===2) initS2();
+  if (n===3) initS3(); if (n===4) initS4();
+  if (n===5) initS5(); if (n===6) initS6();
+}
+
+// ═══════════════════════════════════════════════════════════
+// SCENE 1
+// ═══════════════════════════════════════════════════════════
+function initS1() {
+  document.getElementById('next-btn').disabled = false;
+  document.getElementById('gen-btn').disabled = !hasSufficientProfile();
+}
+
+function hasSufficientProfile() {
+  return document.getElementById('f-btype').value && document.getElementById('f-entity').value;
+}
+
+function onProfileChange() {
+  activeShortcut = null;
+  document.querySelectorAll('.sco').forEach(e => e.classList.remove('sel'));
+  const btype = document.getElementById('f-btype').value;
+  const entity = document.getElementById('f-entity').value;
+  const rev = document.getElementById('f-rev').value;
+  if (btype) refreshSuggestions(btype, entity, rev, {});
+  document.getElementById('gen-btn').disabled = !hasSufficientProfile();
+  document.getElementById('tb-client').textContent = document.getElementById('f-name').value || 'New Project';
+}
+
+function refreshSuggestions(btype, entity, rev, preStatuses) {
+  const newSugs = computeSuggestions(btype, entity, rev);
+  const toAnimate = newSugs.filter(s => !shownSugIds.has(s.id));
+  toAnimate.forEach(s => { shownSugIds.add(s.id); sugQueue.push({ s, preStatus: preStatuses[s.id] || null }); });
+  if (!sugAnimRunning && sugQueue.length) animateSugQueue();
+}
+
+function animateSugQueue() {
+  if (!sugQueue.length) { sugAnimRunning = false; return; }
+  sugAnimRunning = true;
+  const { s, preStatus } = sugQueue.shift();
+  const panel = document.getElementById('sug-panel');
+  // Remove placeholder
+  panel.querySelector('.sug-empty')?.remove();
+  const el = document.createElement('div');
+  el.className = 'sug-item';
+  el.id = 'si-' + s.id;
+  el.innerHTML = `
+    <div class="sug-top">
+      <div class="sug-left">
+        <div class="sug-icon">${s.icon}</div>
+        <div class="sug-body">
+          <div class="sug-name">${s.name}</div>
+          <div class="sug-reason">${s.reason}</div>
+        </div>
+      </div>
+      <span class="sug-pri ${s.pri}">${s.pri}</span>
+    </div>
+    <div class="sug-actions" id="sa-${s.id}">
+      <button class="sug-btn" onclick="markSrc('${s.id}','connected')">✓ Connected</button>
+      <button class="sug-btn" onclick="markSrc('${s.id}','requested')">Request →</button>
+      <button class="sug-btn" onclick="markSrc('${s.id}','na')">N/A</button>
+    </div>`;
+  panel.appendChild(el);
+  setTimeout(() => el.classList.add('vis'), 30);
+  if (preStatus) setTimeout(() => markSrc(s.id, preStatus), 300);
+  setTimeout(animateSugQueue, preStatus ? 250 : 400);
+}
+
+function markSrc(id, status) {
+  sourceStatuses[id] = status;
+  const acts = document.getElementById('sa-' + id);
+  if (!acts) return;
+  const labels = { connected:'✓ Connected', requested:'⏳ Requested', na:'— N/A' };
+  acts.innerHTML = `<span class="sug-btn active-${status}">${labels[status]}</span>`;
+}
+
+function useShortcut(key) {
+  activeShortcut = key;
+  const d = SHORTCUT_DATA[key];
+  document.querySelectorAll('.sco').forEach(e => e.classList.remove('sel'));
+  document.getElementById('sco-' + key).classList.add('sel');
+
+  // Fill form fields with stagger
+  const f = d.form;
+  const fields = [
+    ['f-name', f.name], ['f-btype', f.btype], ['f-entity', f.entity], ['f-rev', f.rev]
+  ];
+  fields.forEach(([id, val], i) => setTimeout(() => { document.getElementById(id).value = val; }, i * 150));
+
+  // Reset suggestion panel and state
+  shownSugIds.clear(); sugQueue = []; sugAnimRunning = false;
+  sourceStatuses = {};
+  document.getElementById('sug-panel').innerHTML = '<div class="sug-empty">Analyzing profile…</div>';
+
+  setTimeout(() => {
+    const btype = f.btype, entity = f.entity, rev = f.rev;
+    const sugs = computeSuggestions(btype, entity, rev);
+    sugs.forEach(s => {
+      shownSugIds.add(s.id);
+      sugQueue.push({ s, preStatus: d.sources[s.id] || null });
+    });
+    document.getElementById('sug-panel').innerHTML = '';
+    animateSugQueue();
+  }, fields.length * 150 + 200);
+
+  document.getElementById('tb-client').textContent = f.name;
+  document.getElementById('gen-btn').disabled = false;
+}
+
+// ═══════════════════════════════════════════════════════════
+// SCENE 2 — streaming plan generation
+// ═══════════════════════════════════════════════════════════
+let stIdx = 0, stChar = 0, stRunning = false;
+
+function initS2() {
+  document.getElementById('next-btn').disabled = true;
+  document.getElementById('terminal').innerHTML = '';
+  document.getElementById('bp').innerHTML = '';
+  document.getElementById('pcb').textContent = '0 phases';
+  stIdx = 0; stChar = 0; stRunning = false;
+
+  const btype = document.getElementById('f-btype').value;
+  const entity = document.getElementById('f-entity').value;
+  const { steps, phases: genPhases } = generatePlan(btype, entity, sourceStatuses);
+  generatedSteps = steps;
+  phases = genPhases;
+  setTimeout(streamStep, 500);
+}
+
+function streamStep() {
+  if (stRunning) return;
+  if (stIdx >= generatedSteps.length) {
+    const ok = document.createElement('div');
+    ok.className = 't-ok';
+    ok.textContent = '✓ Plan complete — ' + phases.length + ' phases';
+    document.getElementById('terminal').appendChild(ok);
+    document.getElementById('next-btn').disabled = false;
+    return;
+  }
+  stRunning = true;
+  const step = generatedSteps[stIdx];
+  const lineEl = document.createElement('div');
+  lineEl.className = 'tl streaming';
+  lineEl.innerHTML = '<em class="tic">›</em><span class="tt"></span><span class="tcur"> </span>';
+  document.getElementById('terminal').appendChild(lineEl);
+  lineEl.scrollIntoView({ block:'nearest' });
+  stChar = 0;
+  streamChar(lineEl, step);
+}
+
+function streamChar(lineEl, step) {
+  const txt = step.text;
+  const tt = lineEl.querySelector('.tt');
+  if (stChar < txt.length) {
+    tt.textContent = txt.slice(0, stChar + 1);
+    stChar++;
+    setTimeout(() => streamChar(lineEl, step), 13);
+  } else {
+    lineEl.querySelector('.tcur').remove();
+    lineEl.classList.remove('streaming');
+    const map = { add:'added', skip:'skipped', flag:'flagged', note:'added' };
+    lineEl.classList.add(map[step.type] || 'added');
+    const icons = { add:'+', skip:'✗', flag:'⚠', note:'›' };
+    lineEl.querySelector('.tic').textContent = icons[step.type] || '›';
+    if (step.type === 'add' && step.pid) revealPhase(step.pid);
+    stRunning = false; stIdx++;
+    setTimeout(streamStep, 320);
+  }
+}
+
+function revealPhase(pid) {
+  const p = phases.find(x => x.id === pid);
+  if (!p) return;
+  const bp = document.getElementById('bp');
+  const el = document.createElement('div');
+  el.className = 'mp';
+  el.innerHTML = `<div class="mpd ${p.cp ? 'cp':''}"></div><span class="mpn">${p.name}</span>${p.cp ? '<span class="mpbg">Checkpoint</span>' : ''}`;
+  bp.appendChild(el);
+  el.scrollIntoView({ block:'nearest', behavior:'smooth' });
+  setTimeout(() => el.classList.add('vis'), 30);
+  const cnt = bp.querySelectorAll('.mp').length;
+  document.getElementById('pcb').textContent = cnt + (cnt===1 ? ' phase':' phases');
+}
+
+// ═══════════════════════════════════════════════════════════
+// SCENE 3
+// ═══════════════════════════════════════════════════════════
+function initS3() {
+  planApproved = false;
+  const btn = document.getElementById('appbtn');
+  btn.classList.remove('done');
+  btn.innerHTML = '<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 16 16"><path d="M3 8l4 4 6-7"/></svg>Approve Plan';
+  document.getElementById('next-btn').disabled = true;
+  const d = activeShortcut ? SHORTCUT_DATA[activeShortcut] : null;
+  document.getElementById('s3hint').innerHTML = d ? d.hint : 'Drag to reorder phases. Remove what doesn\'t apply. Add what\'s missing.';
+  renderSortable();
+  renderAddMenu();
+}
+
+function renderSortable() {
+  document.getElementById('phase-list').innerHTML = phases.map(p => `
+    <div class="sk" data-id="${p.id}">
+      <div class="dh"><div class="dhr"><div class="dhd"></div><div class="dhd"></div></div><div class="dhr"><div class="dhd"></div><div class="dhd"></div></div><div class="dhr"><div class="dhd"></div><div class="dhd"></div></div></div>
+      <div class="si"><div class="sknm">${p.name}${p.cp ? ' <span class="skbg">Checkpoint</span>':''}</div><div class="skdesc">${p.desc}</div></div>
+      <button class="rmb" onclick="removePhase('${p.id}')">✕</button>
+    </div>`).join('');
+  if (sortInst) { try { sortInst.destroy(); } catch(e){} }
+  sortInst = Sortable.create(document.getElementById('phase-list'), {
+    animation:180, handle:'.dh', ghostClass:'sortable-ghost', chosenClass:'sortable-chosen',
+    onEnd(e) { const m = phases.splice(e.oldIndex,1)[0]; phases.splice(e.newIndex,0,m); }
+  });
+}
+
+function renderAddMenu() {
+  const existing = new Set(phases.map(p => p.id));
+  const extras = activeShortcut ? SHORTCUT_DATA[activeShortcut].extra : [
+    { id:'est-tax',   name:'Estimated Tax Calculation', desc:'Calculate quarterly estimated tax payments' },
+    { id:'state-ret', name:'State Return',              desc:'File state income tax return' },
+  ];
+  document.getElementById('addm').innerHTML = extras.map(e => `
+    <div class="ami ${existing.has(e.id) ? 'used':''}" onclick="addPhase('${e.id}','${e.name}','${e.desc}')">
+      <div class="amn">${e.name}</div><div class="amd">${e.desc}</div>
+    </div>`).join('');
+}
+
+function toggleAdd() { document.getElementById('addm').classList.toggle('open'); }
+document.addEventListener('click', e => { if (!e.target.closest('#add-wrap')) document.getElementById('addm').classList.remove('open'); });
+
+function addPhase(id, name, desc) {
+  if (phases.find(p => p.id === id)) return;
+  const p = { id, name, desc, cp:false, nt:'ok', note:'✓ Completed', dur:2000, status:'pending' };
+  const efIdx = phases.findIndex(p => p.id === 'efile');
+  efIdx >= 0 ? phases.splice(efIdx, 0, p) : phases.push(p);
+  renderSortable(); renderAddMenu();
+  document.getElementById('addm').classList.remove('open');
+}
+
+function removePhase(id) { phases = phases.filter(p => p.id !== id); renderSortable(); renderAddMenu(); }
+
+function approvePlan() {
+  if (planApproved) return;
+  planApproved = true;
+  const btn = document.getElementById('appbtn');
+  btn.classList.add('done'); btn.innerHTML = '✓ Plan Approved';
+  document.getElementById('next-btn').disabled = false;
+}
+
+// ═══════════════════════════════════════════════════════════
+// SCENE 4
+// ═══════════════════════════════════════════════════════════
+let exStatuses = {};
+function initS4() {
+  execDone = false; exStatuses = {};
+  phases.forEach(p => exStatuses[p.id] = 'pending');
+  document.getElementById('exec-list').innerHTML = phases.map(p => `
+    <div class="exi" id="ex-${p.id}">
+      <div class="exs pending">○</div>
+      <div class="exb"><div class="exn">${p.name}${p.cp ? '<span class="excpbg">Checkpoint</span>':''}</div><div class="exd">${p.desc}</div></div>
+    </div>`).join('');
+  document.getElementById('stbtn').disabled = false;
+  document.getElementById('cpbanner').classList.remove('vis');
+  document.getElementById('next-btn').disabled = true;
+}
+
+function updateExItem(id, st) {
+  exStatuses[id] = st;
+  const p = phases.find(x => x.id === id);
+  if (!p) return;
+  const el = document.getElementById('ex-' + id);
+  if (!el) return;
+  const icons = { pending:'○', running:'⟳', done:'✓', warning:'⚠', waiting:'⏸' };
+  el.querySelector('.exs').className = 'exs ' + st;
+  el.querySelector('.exs').textContent = icons[st];
+  el.querySelectorAll('.exnt').forEach(n => n.remove());
+  const body = el.querySelector('.exb');
+  if ((st==='done'||st==='warning') && p.note) {
+    const n = document.createElement('div');
+    n.className = 'exnt ' + (p.nt || 'ok');
+    n.textContent = p.note;
+    body.appendChild(n);
+  }
+  if (st==='waiting') {
+    const n = document.createElement('div');
+    n.className = 'exnt warn';
+    n.textContent = 'Paused — awaiting your review before filing';
+    body.appendChild(n);
+  }
+  el.scrollIntoView({ behavior:'smooth', block:'nearest' });
+}
+
+function startExec() {
+  document.getElementById('stbtn').disabled = true;
+  runPhase(0);
+}
+
+function runPhase(idx) {
+  if (idx >= phases.length) { execDone = true; document.getElementById('next-btn').disabled = false; return; }
+  const p = phases[idx];
+  if (p.cp) {
+    if (p.id !== 'cpa-rev') {
+      updateExItem(p.id, 'running');
+      setTimeout(() => {
+        p.note = '✓ Approved via email link — just now';
+        p.nt = 'ok';
+        updateExItem(p.id, 'done');
+        setTimeout(() => runPhase(idx+1), 400);
+      }, 1600);
+    } else {
+      updateExItem(p.id, 'waiting');
+      document.getElementById('cpbanner').classList.add('vis');
+      execDone = true;
+      document.getElementById('next-btn').disabled = false;
+    }
+    return;
+  }
+  updateExItem(p.id, 'running');
+  setTimeout(() => {
+    updateExItem(p.id, p.nt === 'warn' ? 'warning' : 'done');
+    setTimeout(() => runPhase(idx+1), 300);
+  }, p.dur);
+}
+
+// ═══════════════════════════════════════════════════════════
+// SCENE 5
+// ═══════════════════════════════════════════════════════════
+function initS5() {
+  resolved.clear();
+  const d = activeShortcut ? SHORTCUT_DATA[activeShortcut] : null;
+  const flagged = d ? d.flagged : [
+    { id:'g1', icon:'💡', t:'Review flagged deductions', d:'Several deductions were identified — confirm they are fully documented.' },
+    { id:'g2', icon:'⚠️', t:'Verify reported income',   d:'Cross-check reported income against all connected sources.' },
+  ];
+  document.getElementById('rv-items').innerHTML = flagged.map(f => `
+    <div class="fi" id="fi-${f.id}">
+      <div class="fih">
+        <div class="fit"><span>${f.icon} </span>${f.t}</div>
+        <button class="resbtn" onclick="resolveItem('${f.id}')">Resolve</button>
+      </div>
+      <div class="fid">${f.d}</div>
+    </div>`).join('');
+
+  const summary = d ? d.summary : [['Entity','—'],['Income','—'],['Deductions','—'],['Effective Rate','—',true]];
+  const clientName = document.getElementById('f-name').value || 'Client';
+  document.getElementById('sum-card').innerHTML =
+    `<div class="sumt">Tax Summary · ${clientName}</div>` +
+    summary.map(([l,v,hi]) => `<div class="sumr"><span class="suml">${l}</span><span class="sumv ${hi?'hi':''}">${v}</span></div>`).join('');
+
+  const btn = document.getElementById('appall');
+  btn.disabled = true; btn.style.opacity = '.4'; btn.style.cursor = 'not-allowed';
+  document.getElementById('next-btn').disabled = true;
+
+  // Store flagged length for updateFooter
+  window._flaggedLen = flagged.length;
+}
+
+function resolveItem(id) {
+  resolved.add(id);
+  const el = document.getElementById('fi-'+id);
+  el.classList.add('res');
+  el.querySelector('.resbtn').className = 'resbtn done';
+  el.querySelector('.resbtn').textContent = '✓ Resolved';
+  if (resolved.size >= window._flaggedLen) {
+    const btn = document.getElementById('appall');
+    btn.disabled = false; btn.style.opacity = '1'; btn.style.cursor = 'pointer';
+    document.getElementById('next-btn').disabled = false;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// SCENE 6
+// ═══════════════════════════════════════════════════════════
+function initS6() {
+  const d = activeShortcut ? SHORTCUT_DATA[activeShortcut] : null;
+  const name = document.getElementById('f-name').value || 'Client';
+  document.getElementById('f6sub').textContent = name + ' · Tax Year 2024';
+  const ents = d ? d.ents : [{ n: name, c: 'IRS #—' }];
+  // Ensure grid columns match entity count
+  const grid = document.getElementById('f6ents');
+  grid.style.gridTemplateColumns = `repeat(${Math.min(ents.length, 3)}, 1fr)`;
+  grid.innerHTML = ents.map(e => `<div class="f6ec"><div class="f6eck">✅</div><div class="f6ecn">${e.n}</div><div class="f6ecc">${e.c}</div></div>`).join('');
+  const st = d ? d.stats : { r:'—', rs:'', d:'—', ds:'', t:'—', ts:'' };
+  document.getElementById('s6r').textContent = st.r;
+  document.getElementById('s6rs').textContent = st.rs;
+  document.getElementById('s6d').textContent = st.d;
+  document.getElementById('s6ds').textContent = st.ds;
+  document.getElementById('s6p').textContent = phases.length;
+  document.getElementById('s6t').textContent = st.t;
+  document.getElementById('s6ts').textContent = st.ts;
+}
+
+function resetDemo() {
+  activeShortcut = null; sourceStatuses = {}; phases = []; planApproved = false; execDone = false; resolved.clear();
+  shownSugIds.clear(); sugQueue = []; sugAnimRunning = false;
+  document.querySelectorAll('.sco').forEach(e => e.classList.remove('sel'));
+  ['f-name','f-btype','f-entity','f-rev'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('sug-panel').innerHTML = '<div class="sug-empty">Fill in the profile to see suggested data sources.</div>';
+  document.getElementById('tb-client').textContent = 'New Project';
+  document.getElementById('next-btn').style.display = '';
+  goToScene(1);
+}
+
+// ═══════════════════════════════════════════════════════════
+// BOOT
+// ═══════════════════════════════════════════════════════════
+renderStepNav(); updateFooter();
+</script>
+</body>
+</html>
