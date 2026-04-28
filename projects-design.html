@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Project Orchestration — Design Review</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --s50:#f8fafc;--s100:#f1f5f9;--s200:#e2e8f0;--s300:#cbd5e1;--s400:#94a3b8;--s500:#64748b;--s600:#475569;--s700:#334155;--s800:#1e293b;--s900:#0f172a;
+  --i50:#eef2ff;--i100:#e0e7ff;--i200:#c7d2fe;--i500:#6366f1;--i600:#4f46e5;--i700:#4338ca;
+  --g50:#f0fdf4;--g100:#dcfce7;--g500:#22c55e;--g600:#16a34a;--g700:#15803d;
+  --a50:#fffbeb;--a100:#fef3c7;--a500:#f59e0b;--a700:#b45309;
+  --r50:#fff1f2;--r100:#ffe4e6;--r500:#ef4444;--r600:#dc2626;
+  --b50:#eff6ff;--b100:#dbeafe;--b500:#3b82f6;--b700:#1d4ed8;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:14px;background:var(--s50);color:var(--s900);line-height:1.6}
+
+/* layout */
+.page{max-width:960px;margin:0 auto;padding:48px 32px 80px}
+
+/* header */
+.doc-header{margin-bottom:48px;padding-bottom:28px;border-bottom:2px solid var(--s200)}
+.doc-meta{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.logo-mark{width:30px;height:30px;background:linear-gradient(135deg,#6366f1,#4f46e5);border-radius:7px;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:13px;flex-shrink:0}
+.doc-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--s400)}
+.doc-title{font-size:32px;font-weight:800;color:var(--s900);line-height:1.2;margin-bottom:10px}
+.doc-subtitle{font-size:16px;color:var(--s500);margin-bottom:20px}
+.doc-chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{font-size:11px;font-weight:600;padding:3px 10px;border-radius:9999px}
+.chip-blue{background:var(--b100);color:var(--b700)}
+.chip-green{background:var(--g100);color:var(--g700)}
+.chip-amber{background:var(--a100);color:var(--a700)}
+.chip-slate{background:var(--s100);color:var(--s600)}
+
+/* sections */
+.section{margin-bottom:52px}
+.sec-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--i500);margin-bottom:6px}
+.sec-title{font-size:22px;font-weight:700;color:var(--s900);margin-bottom:4px}
+.sec-sub{font-size:13px;color:var(--s500);margin-bottom:24px}
+
+/* callout boxes */
+.callouts{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:0}
+.callout{background:white;border:1px solid var(--s200);border-radius:12px;padding:18px}
+.callout-icon{font-size:22px;margin-bottom:10px}
+.callout-title{font-size:13px;font-weight:700;color:var(--s800);margin-bottom:4px}
+.callout-body{font-size:12px;color:var(--s500);line-height:1.5}
+
+/* diagram containers */
+.diagram{background:white;border:1px solid var(--s200);border-radius:14px;padding:28px;margin-bottom:0;overflow:hidden}
+.diagram-label{font-size:11px;font-weight:600;color:var(--s400);text-align:center;margin-top:16px}
+
+/* ── LAYER STACK ── */
+.layer-stack{display:flex;flex-direction:column;gap:0;max-width:620px;margin:0 auto}
+.layer{border-radius:12px;padding:18px 24px;position:relative}
+.layer-project{background:var(--i50);border:2px solid var(--i200)}
+.layer-task{background:var(--a50);border:2px solid var(--a100);margin:0 24px}
+.layer-engine{background:var(--g50);border:2px solid var(--g100);margin:0 48px}
+.layer-arrow{text-align:center;color:var(--s300);font-size:18px;line-height:1;margin:2px 0}
+.layer-name{font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+.layer-project .layer-name{color:var(--i600)}
+.layer-task .layer-name{color:var(--a700)}
+.layer-engine .layer-name{color:var(--g700)}
+.layer-attrs{display:flex;flex-wrap:wrap;gap:6px}
+.layer-attr{font-size:11px;font-weight:500;padding:2px 8px;border-radius:6px;background:white;color:var(--s600);border:1px solid var(--s200)}
+.layer-note{font-size:11px;color:var(--s400);margin-top:8px;font-style:italic}
+
+/* ── ENTITY DIAGRAM (SVG) ── */
+.svg-wrap{width:100%;overflow-x:auto}
+
+/* ── TASK TAXONOMY ── */
+.taxonomy{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--s200);border-radius:12px;overflow:hidden}
+.tax-col{padding:20px 22px}
+.tax-col:first-child{background:var(--i50);border-right:1px solid var(--s200)}
+.tax-col:last-child{background:var(--a50)}
+.tax-head{display:flex;align-items:center;gap:8px;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--s200)}
+.tax-badge{font-size:11px;font-weight:700;padding:3px 10px;border-radius:9999px}
+.tax-badge-auto{background:var(--i100);color:var(--i600)}
+.tax-badge-manual{background:var(--a100);color:var(--a700)}
+.tax-title{font-size:14px;font-weight:700}
+.tax-row{display:flex;gap:10px;margin-bottom:10px;font-size:12px}
+.tax-key{width:120px;flex-shrink:0;font-weight:600;color:var(--s500)}
+.tax-val{color:var(--s700)}
+
+/* ── CREATION PATHS ── */
+.paths{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.path-card{background:white;border:1px solid var(--s200);border-radius:12px;overflow:hidden}
+.path-head{padding:14px 18px;font-size:13px;font-weight:700;display:flex;align-items:center;gap:8px}
+.path-head-a{background:var(--i50);color:var(--i700);border-bottom:1px solid var(--i100)}
+.path-head-b{background:var(--a50);color:var(--a700);border-bottom:1px solid var(--a100)}
+.path-body{padding:16px 18px}
+.path-step{display:flex;gap:10px;margin-bottom:10px;font-size:12px;align-items:flex-start}
+.path-step:last-child{margin-bottom:0}
+.path-dot{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;margin-top:1px}
+.path-dot-a{background:var(--i100);color:var(--i600)}
+.path-dot-b{background:var(--a100);color:var(--a700)}
+.path-text{color:var(--s700);line-height:1.45}
+.path-arrow{text-align:center;color:var(--s300);font-size:14px;padding:2px 0}
+
+/* ── PIPELINE CHAIN ── */
+.pipeline{display:flex;align-items:center;gap:0;overflow-x:auto;padding:4px 0 8px}
+.pipe-step{flex-shrink:0;width:112px;background:white;border:1.5px solid var(--s200);border-radius:10px;padding:12px 10px;text-align:center;position:relative}
+.pipe-step.auto{border-color:var(--i200);background:var(--i50)}
+.pipe-step.manual{border-color:var(--a100);background:var(--a50)}
+.pipe-step.milestone{box-shadow:0 0 0 2px var(--g500)}
+.pipe-icon{font-size:18px;margin-bottom:5px}
+.pipe-name{font-size:11px;font-weight:600;color:var(--s800);line-height:1.3;margin-bottom:4px}
+.pipe-role{font-size:10px;color:var(--s400);font-weight:500}
+.pipe-badge{font-size:9px;font-weight:700;padding:1px 5px;border-radius:9999px;margin-top:4px;display:inline-block}
+.pipe-badge.auto{background:var(--i100);color:var(--i600)}
+.pipe-badge.manual{background:var(--a100);color:var(--a700)}
+.pipe-badge.milestone{background:var(--g100);color:var(--g700)}
+.pipe-arrow{flex-shrink:0;color:var(--s300);font-size:16px;padding:0 4px;margin-top:-4px}
+.pipe-legend{display:flex;gap:16px;margin-top:14px;flex-wrap:wrap}
+.pipe-leg-item{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--s500)}
+.pipe-leg-dot{width:10px;height:10px;border-radius:3px}
+
+/* ── COMPLETION LOGIC ── */
+.completion-wrap{display:flex;gap:16px;align-items:flex-start}
+.completion-diagram{flex:1}
+.comp-outer{background:var(--i50);border:2px solid var(--i200);border-radius:12px;padding:16px;position:relative}
+.comp-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--i600);margin-bottom:2px}
+.comp-name{font-size:13px;font-weight:700;color:var(--s800);margin-bottom:12px}
+.comp-inner{background:white;border:1.5px solid var(--s200);border-radius:9px;padding:12px;margin-bottom:10px}
+.comp-inner-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--s400);margin-bottom:8px}
+.comp-node{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--s600);margin-bottom:5px}
+.comp-node:last-child{margin-bottom:0}
+.comp-node-icon{width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0}
+.comp-node-done{background:var(--g100);color:var(--g600)}
+.comp-node-emit{background:var(--a100);color:var(--a700)}
+.comp-child{background:var(--a50);border:1.5px dashed var(--a500);border-radius:9px;padding:11px 12px}
+.comp-child-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--a700);margin-bottom:4px}
+.comp-child-name{font-size:12px;font-weight:600;color:var(--s800)}
+.comp-child-sub{font-size:11px;color:var(--s400)}
+.comp-rule{flex:0 0 260px;background:var(--s800);border-radius:12px;padding:18px;color:white}
+.comp-rule-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--s400);margin-bottom:12px}
+.comp-rule-item{display:flex;gap:8px;margin-bottom:10px;font-size:12px;line-height:1.4}
+.comp-rule-item:last-child{margin-bottom:0}
+.comp-tick{color:var(--g500);flex-shrink:0;font-size:13px;margin-top:1px}
+.comp-and{text-align:center;font-size:11px;font-weight:700;color:var(--s400);padding:4px 0;letter-spacing:.06em}
+
+/* ── STATE MACHINE ── */
+.states{display:flex;align-items:center;gap:0;flex-wrap:wrap;row-gap:16px;justify-content:center}
+.state{text-align:center;flex-shrink:0}
+.state-bubble{width:90px;height:90px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;margin:0 auto 6px;border:2px solid}
+.state-ns{background:var(--s100);border-color:var(--s300)}
+.state-ip{background:var(--b100);border-color:var(--b500)}
+.state-bl{background:var(--r100);border-color:var(--r500)}
+.state-nr{background:var(--a100);border-color:var(--a500)}
+.state-co{background:var(--g100);border-color:var(--g500)}
+.state-ca{background:var(--s100);border-color:var(--s400)}
+.state-icon{font-size:20px}
+.state-name{font-size:10px;font-weight:700;color:var(--s700)}
+.state-arrow{font-size:18px;color:var(--s300);padding:0 6px;margin-top:-24px}
+.state-label{font-size:11px;color:var(--s500);max-width:90px;line-height:1.3}
+.state-trans{font-size:10px;color:var(--s400);text-align:center;padding:0 4px;margin-top:-20px;max-width:70px}
+
+/* ── PHASES ── */
+.phases{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.phase-card{background:white;border:1px solid var(--s200);border-radius:10px;overflow:hidden}
+.phase-head{padding:10px 14px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+.ph1 .phase-head{background:var(--i50);color:var(--i600)}
+.ph2 .phase-head{background:var(--b50);color:var(--b700)}
+.ph3 .phase-head{background:var(--a50);color:var(--a700)}
+.ph4 .phase-head{background:var(--g50);color:var(--g700)}
+.phase-body{padding:12px 14px}
+.phase-item{font-size:11px;color:var(--s600);padding:3px 0;border-bottom:1px solid var(--s100);display:flex;gap:6px;align-items:flex-start}
+.phase-item:last-child{border-bottom:none}
+.phase-item::before{content:"·";color:var(--s300);flex-shrink:0}
+
+/* ── DECISIONS TABLE ── */
+.decisions{width:100%;border-collapse:collapse;font-size:12px}
+.decisions th{background:var(--s800);color:white;padding:10px 14px;text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+.decisions th:first-child{border-radius:8px 0 0 0}
+.decisions th:last-child{border-radius:0 8px 0 0}
+.decisions td{padding:11px 14px;border-bottom:1px solid var(--s100);vertical-align:top;color:var(--s700)}
+.decisions tr:last-child td{border-bottom:none}
+.decisions tr:nth-child(even) td{background:var(--s50)}
+.dec-open{font-size:10px;font-weight:700;padding:2px 7px;border-radius:9999px;background:var(--a100);color:var(--a700)}
+.dec-decided{font-size:10px;font-weight:700;padding:2px 7px;border-radius:9999px;background:var(--g100);color:var(--g700)}
+
+/* divider */
+.divider{height:1px;background:var(--s200);margin:48px 0}
+
+/* highlight box */
+.highlight{background:var(--s800);color:white;border-radius:12px;padding:20px 24px;margin-bottom:0;display:flex;gap:16px;align-items:flex-start}
+.highlight-icon{font-size:22px;flex-shrink:0;margin-top:2px}
+.highlight-title{font-size:13px;font-weight:700;color:white;margin-bottom:4px}
+.highlight-body{font-size:12px;color:var(--s300);line-height:1.6}
+
+/* two col */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+</style>
+</head>
+<body>
+<div class="page">
+
+<!-- ── HEADER ── -->
+<div class="doc-header">
+  <div class="doc-meta">
+    <div class="logo-mark">A</div>
+    <span class="doc-label">Atlas · Design Review</span>
+  </div>
+  <div class="doc-title">Project Orchestration Layer</div>
+  <div class="doc-subtitle">Unified model for client engagements — automated, manual, and hybrid work under one roof</div>
+  <div class="doc-chips">
+    <span class="chip chip-blue">Backend · Django</span>
+    <span class="chip chip-blue">Frontend · Next.js</span>
+    <span class="chip chip-amber">Status: Pre-implementation</span>
+    <span class="chip chip-slate">Author: Engineering · Apr 2026</span>
+  </div>
+</div>
+
+
+<!-- ── 1. PROBLEM ── -->
+<div class="section">
+  <div class="sec-label">01</div>
+  <div class="sec-title">Problem</div>
+  <div class="sec-sub">CPA firms run multi-step client engagements. Today, work is either fully automated (workflows) or fully manual (ad hoc). There's no unified view of what's in flight, what's blocked, or what a person should work on next.</div>
+  <div class="callouts">
+    <div class="callout">
+      <div class="callout-icon">🗂️</div>
+      <div class="callout-title">No engagement container</div>
+      <div class="callout-body">Automated workflow runs exist in isolation. There's no "Tax Prep 2025 — Mesa Verde" record that owns all the work for that engagement.</div>
+    </div>
+    <div class="callout">
+      <div class="callout-icon">🔀</div>
+      <div class="callout-title">Mixed work has no home</div>
+      <div class="callout-body">An engagement includes automated steps (import data) and human steps (CPA review, client sign-off). These can't coexist in the current workflow model.</div>
+    </div>
+    <div class="callout">
+      <div class="callout-icon">🧑‍💼</div>
+      <div class="callout-title">No person-facing queue</div>
+      <div class="callout-body">A CPA has no single view of "what do I need to do right now across all my clients." Work is discovered by checking each workflow run individually.</div>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+
+<!-- ── 2. MENTAL MODEL ── -->
+<div class="section">
+  <div class="sec-label">02</div>
+  <div class="sec-title">Mental Model</div>
+  <div class="sec-sub">Three layers. Each has a distinct job. None duplicates the other.</div>
+
+  <div class="diagram">
+    <div class="layer-stack">
+      <div class="layer layer-project">
+        <div class="layer-name">Project</div>
+        <div class="layer-attrs">
+          <span class="layer-attr">Client</span>
+          <span class="layer-attr">Period</span>
+          <span class="layer-attr">Owner</span>
+          <span class="layer-attr">Deadline</span>
+          <span class="layer-attr">Status</span>
+          <span class="layer-attr">Metadata</span>
+        </div>
+        <div class="layer-note">User-facing anchor — who, what, when. CPA thinks in projects, not workflows.</div>
+      </div>
+      <div class="layer-arrow">↓ &nbsp;1 : many</div>
+      <div class="layer layer-task">
+        <div class="layer-name">Tasks</div>
+        <div class="layer-attrs">
+          <span class="layer-attr">Template-defined</span>
+          <span class="layer-attr">Workflow-emitted</span>
+          <span class="layer-attr">Manual</span>
+          <span class="layer-attr">Automated</span>
+          <span class="layer-attr">parent_task</span>
+          <span class="layer-attr">depends_on</span>
+        </div>
+        <div class="layer-note">Work items. Coarse-grained milestones from template + fine-grained items emitted at runtime by workflows.</div>
+      </div>
+      <div class="layer-arrow">↓ &nbsp;automated tasks trigger</div>
+      <div class="layer layer-engine">
+        <div class="layer-name">Workflow Engine</div>
+        <div class="layer-attrs">
+          <span class="layer-attr">WorkflowExecution</span>
+          <span class="layer-attr">Nodes</span>
+          <span class="layer-attr">Internal DAG</span>
+          <span class="layer-attr">WorkflowTrigger</span>
+        </div>
+        <div class="layer-note">Automation plumbing. Invisible to the CPA. Handles parallelism, node sequencing, and emitting child tasks when human review is needed.</div>
+      </div>
+    </div>
+    <div class="diagram-label">Project is a thin identity layer. Workflow engine is the execution layer. They do not duplicate each other.</div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+
+<!-- ── 3. DATA MODEL ── -->
+<div class="section">
+  <div class="sec-label">03</div>
+  <div class="sec-title">Data Model</div>
+  <div class="sec-sub">Key entities and their relationships.</div>
+
+  <div class="diagram">
+    <div class="svg-wrap">
+    <svg width="880" height="380" viewBox="0 0 880 380" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- ProjectTemplate -->
+      <rect x="20" y="20" width="190" height="130" rx="10" fill="#eef2ff" stroke="#c7d2fe" stroke-width="1.5"/>
+      <text x="115" y="44" text-anchor="middle" font-size="11" font-weight="700" fill="#4f46e5" font-family="system-ui">PROJECT TEMPLATE</text>
+      <line x1="20" y1="52" x2="210" y2="52" stroke="#c7d2fe" stroke-width="1"/>
+      <text x="32" y="70" font-size="11" fill="#475569" font-family="system-ui">template_type</text>
+      <text x="32" y="86" font-size="11" fill="#475569" font-family="system-ui">name</text>
+      <text x="32" y="102" font-size="11" fill="#475569" font-family="system-ui">estimated_days</text>
+      <text x="32" y="118" font-size="11" fill="#475569" font-family="system-ui">is_active</text>
+
+      <!-- TaskDefinition -->
+      <rect x="20" y="200" width="190" height="160" rx="10" fill="#eef2ff" stroke="#c7d2fe" stroke-width="1.5"/>
+      <text x="115" y="224" text-anchor="middle" font-size="11" font-weight="700" fill="#4f46e5" font-family="system-ui">TASK DEFINITION</text>
+      <line x1="20" y1="232" x2="210" y2="232" stroke="#c7d2fe" stroke-width="1"/>
+      <text x="32" y="250" font-size="11" fill="#475569" font-family="system-ui">key</text>
+      <text x="32" y="266" font-size="11" fill="#475569" font-family="system-ui">task_type  (auto | manual)</text>
+      <text x="32" y="282" font-size="11" fill="#475569" font-family="system-ui">workflow_key</text>
+      <text x="32" y="298" font-size="11" fill="#475569" font-family="system-ui">workflow_config  JSON</text>
+      <text x="32" y="314" font-size="11" fill="#475569" font-family="system-ui">assignee_role</text>
+      <text x="32" y="330" font-size="11" fill="#475569" font-family="system-ui">depends_on  JSON[]</text>
+      <text x="32" y="346" font-size="11" fill="#475569" font-family="system-ui">sla_days · is_milestone</text>
+
+      <!-- Arrow Template → TaskDef -->
+      <line x1="115" y1="150" x2="115" y2="200" stroke="#a5b4fc" stroke-width="1.5" stroke-dasharray="4,3"/>
+      <polygon points="115,200 111,191 119,191" fill="#a5b4fc"/>
+      <text x="120" y="178" font-size="10" fill="#94a3b8" font-family="system-ui">1 : many</text>
+
+      <!-- Project -->
+      <rect x="340" y="20" width="200" height="170" rx="10" fill="#f0fdf4" stroke="#bbf7d0" stroke-width="1.5"/>
+      <text x="440" y="44" text-anchor="middle" font-size="11" font-weight="700" fill="#15803d" font-family="system-ui">PROJECT</text>
+      <line x1="340" y1="52" x2="540" y2="52" stroke="#bbf7d0" stroke-width="1"/>
+      <text x="352" y="70" font-size="11" fill="#475569" font-family="system-ui">name</text>
+      <text x="352" y="86" font-size="11" fill="#475569" font-family="system-ui">template  FK</text>
+      <text x="352" y="102" font-size="11" fill="#475569" font-family="system-ui">bookkeeping_account  FK</text>
+      <text x="352" y="118" font-size="11" fill="#475569" font-family="system-ui">period_label · start · end</text>
+      <text x="352" y="134" font-size="11" fill="#475569" font-family="system-ui">owner  FK</text>
+      <text x="352" y="150" font-size="11" fill="#475569" font-family="system-ui">status · deadline</text>
+      <text x="352" y="166" font-size="11" fill="#475569" font-family="system-ui">metadata  JSON</text>
+
+      <!-- Arrow Template → Project (instantiates) -->
+      <line x1="210" y1="60" x2="340" y2="60" stroke="#a5b4fc" stroke-width="1.5" stroke-dasharray="4,3"/>
+      <polygon points="340,60 331,56 331,64" fill="#a5b4fc"/>
+      <text x="240" y="53" font-size="10" fill="#94a3b8" font-family="system-ui">instantiates</text>
+
+      <!-- Task -->
+      <rect x="340" y="230" width="200" height="210" rx="10" fill="#fffbeb" stroke="#fde68a" stroke-width="1.5"/>
+      <text x="440" y="254" text-anchor="middle" font-size="11" font-weight="700" fill="#b45309" font-family="system-ui">TASK</text>
+      <line x1="340" y1="262" x2="540" y2="262" stroke="#fde68a" stroke-width="1"/>
+      <text x="352" y="280" font-size="11" fill="#475569" font-family="system-ui">project  FK</text>
+      <text x="352" y="296" font-size="11" fill="#475569" font-family="system-ui">template_key</text>
+      <text x="352" y="312" font-size="11" fill="#475569" font-family="system-ui">task_type  (auto | manual)</text>
+      <text x="352" y="328" font-size="11" fill="#475569" font-family="system-ui">source  (template | emitted)</text>
+      <text x="352" y="344" font-size="11" fill="#475569" font-family="system-ui">parent_task  FK (self)</text>
+      <text x="352" y="360" font-size="11" fill="#475569" font-family="system-ui">depends_on  JSON[]</text>
+      <text x="352" y="376" font-size="11" fill="#b45309" font-family="system-ui" font-weight="600">workflow_execution  FK</text>
+      <text x="352" y="392" font-size="11" fill="#475569" font-family="system-ui">assignee · status · sla</text>
+
+      <!-- Arrow Project → Task -->
+      <line x1="440" y1="190" x2="440" y2="230" stroke="#86efac" stroke-width="1.5" stroke-dasharray="4,3"/>
+      <polygon points="440,230 436,221 444,221" fill="#86efac"/>
+      <text x="445" y="213" font-size="10" fill="#94a3b8" font-family="system-ui">1 : many</text>
+
+      <!-- Task self-ref (parent_task) -->
+      <path d="M 540 310 Q 590 310 590 355 Q 590 405 540 405 L 440 405" stroke="#fbbf24" stroke-width="1.5" stroke-dasharray="4,3" fill="none"/>
+      <polygon points="440,405 449,401 449,409" fill="#fbbf24"/>
+      <text x="548" y="360" font-size="10" fill="#b45309" font-family="system-ui">parent_task</text>
+      <text x="548" y="373" font-size="10" fill="#b45309" font-family="system-ui">(self-ref)</text>
+
+      <!-- WorkflowExecution -->
+      <rect x="670" y="200" width="190" height="130" rx="10" fill="#f0fdf4" stroke="#bbf7d0" stroke-width="1.5"/>
+      <text x="765" y="224" text-anchor="middle" font-size="11" font-weight="700" fill="#15803d" font-family="system-ui">WORKFLOW EXECUTION</text>
+      <line x1="670" y1="232" x2="860" y2="232" stroke="#bbf7d0" stroke-width="1"/>
+      <text x="682" y="250" font-size="11" fill="#475569" font-family="system-ui">workflow_key</text>
+      <text x="682" y="266" font-size="11" fill="#475569" font-family="system-ui">status</text>
+      <text x="682" y="282" font-size="11" fill="#475569" font-family="system-ui">WorkflowTrigger  →  Project</text>
+      <text x="682" y="298" font-size="11" fill="#475569" font-family="system-ui">started_at · completed_at</text>
+      <text x="682" y="314" font-size="11" fill="#475569" font-family="system-ui">WorkflowNodeExecution[]</text>
+
+      <!-- Arrow Task → WorkflowExecution -->
+      <line x1="540" y1="310" x2="670" y2="280" stroke="#86efac" stroke-width="1.5" stroke-dasharray="4,3"/>
+      <polygon points="670,280 661,279 664,287" fill="#86efac"/>
+      <text x="570" y="290" font-size="10" fill="#94a3b8" font-family="system-ui">triggers</text>
+
+      <!-- WorkflowExecution → Task (emits) -->
+      <path d="M 765 200 Q 765 180 700 150 Q 620 120 540 295" stroke="#fbbf24" stroke-width="1.5" stroke-dasharray="4,3" fill="none"/>
+      <polygon points="540,295 545,286 537,285" fill="#fbbf24"/>
+      <text x="650" y="148" font-size="10" fill="#b45309" font-family="system-ui">emits child</text>
+      <text x="650" y="161" font-size="10" fill="#b45309" font-family="system-ui">tasks (runtime)</text>
+    </svg>
+    </div>
+    <div class="diagram-label">Dashed arrows = logical relationships · Amber = task self-reference (parent_task) · Green = triggers/emits</div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+
+<!-- ── 4. TASK TAXONOMY ── -->
+<div class="section">
+  <div class="sec-label">04</div>
+  <div class="sec-title">Task Taxonomy</div>
+  <div class="sec-sub">Every task is one of two types. Source (where it came from) is orthogonal to type (how it executes).</div>
+
+  <div class="diagram" style="padding:0">
+    <div class="taxonomy">
+      <div class="tax-col">
+        <div class="tax-head">
+          <span style="font-size:20px">⚡</span>
+          <span class="tax-title">Automated Task</span>
+          <span class="tax-badge tax-badge-auto">auto</span>
+        </div>
+        <div class="tax-row"><span class="tax-key">Executes by</span><span class="tax-val">Triggering a workflow. System runs it without human input.</span></div>
+        <div class="tax-row"><span class="tax-key">Starts when</span><span class="tax-val">All depends_on tasks complete. System triggers immediately.</span></div>
+        <div class="tax-row"><span class="tax-key">Completes when</span><span class="tax-val">Workflow done AND all child tasks (emitted) are done.</span></div>
+        <div class="tax-row"><span class="tax-key">Can emit</span><span class="tax-val">Child manual tasks at runtime (e.g. "Review 12 flagged items").</span></div>
+        <div class="tax-row"><span class="tax-key">Example</span><span class="tax-val">Import Bank Data, Categorize Transactions, E-file Return</span></div>
+      </div>
+      <div class="tax-col">
+        <div class="tax-head">
+          <span style="font-size:20px">👤</span>
+          <span class="tax-title">Manual Task</span>
+          <span class="tax-badge tax-badge-manual">manual</span>
+        </div>
+        <div class="tax-row"><span class="tax-key">Executes by</span><span class="tax-val">A human. Assigned to a person by role (CPA / Operator / Client).</span></div>
+        <div class="tax-row"><span class="tax-key">Starts when</span><span class="tax-val">All depends_on complete. Appears in assignee's dashboard queue.</span></div>
+        <div class="tax-row"><span class="tax-key">Completes when</span><span class="tax-val">Human marks it done. Optional: attach output document.</span></div>
+        <div class="tax-row"><span class="tax-key">Can emit</span><span class="tax-val">Nothing. Manual tasks are leaf nodes.</span></div>
+        <div class="tax-row"><span class="tax-key">Example</span><span class="tax-val">Gather Documents, CPA Review, Client Approval, Sign-off</span></div>
+      </div>
+    </div>
+  </div>
+
+  <br/>
+
+  <div class="highlight">
+    <div class="highlight-icon">💡</div>
+    <div>
+      <div class="highlight-title">Source is separate from Type</div>
+      <div class="highlight-body">A task can be <strong>template-defined</strong> (created at project instantiation) or <strong>workflow-emitted</strong> (created at runtime by a workflow node). Either can be manual type. Automated tasks are always template-defined — a workflow can't emit another automated task, only a manual review task.</div>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+
+<!-- ── 5. TASK CREATION PATHS ── -->
+<div class="section">
+  <div class="sec-label">05</div>
+  <div class="sec-title">Task Creation Paths</div>
+  <div class="sec-sub">Tasks enter the system through two distinct paths. Both are first-class.</div>
+
+  <div class="paths">
+    <div class="path-card">
+      <div class="path-head path-head-a">📋 &nbsp;Path A — Template Instantiation</div>
+      <div class="path-body">
+        <div class="path-step"><div class="path-dot path-dot-a">1</div><div class="path-text">CPA creates new project — selects <strong>template type</strong> (Tax Prep / Book Close), client, period, deadline.</div></div>
+        <div class="path-arrow">↓</div>
+        <div class="path-step"><div class="path-dot path-dot-a">2</div><div class="path-text">System loads <strong>ProjectTemplate</strong> and iterates its <strong>TaskDefinitions</strong>.</div></div>
+        <div class="path-arrow">↓</div>
+        <div class="path-step"><div class="path-dot path-dot-a">3</div><div class="path-text">One <strong>Task</strong> record is created per definition. All start as <code>todo</code>. Depends_on, type, role copied from definition.</div></div>
+        <div class="path-arrow">↓</div>
+        <div class="path-step"><div class="path-dot path-dot-a">4</div><div class="path-text">Tasks with empty <code>depends_on</code> become <strong>ready</strong> immediately. Automated ones trigger their workflow. Manual ones notify the assignee.</div></div>
+      </div>
+    </div>
+    <div class="path-card">
+      <div class="path-head path-head-b">⚡ &nbsp;Path B — Workflow Emission</div>
+      <div class="path-body">
+        <div class="path-step"><div class="path-dot path-dot-b">1</div><div class="path-text">An automated project task triggers a workflow. Workflow runs its internal node sequence.</div></div>
+        <div class="path-arrow">↓</div>
+        <div class="path-step"><div class="path-dot path-dot-b">2</div><div class="path-text">A node reaches a <strong>checkpoint</strong> (e.g. cluster_review finds flagged items). Node decides human review is needed.</div></div>
+        <div class="path-arrow">↓</div>
+        <div class="path-step"><div class="path-dot path-dot-b">3</div><div class="path-text">Node emits a <strong>child Task</strong> via post_save signal. Task gets <code>parent_task = triggering project task</code>, <code>source = emitted</code>, <code>type = manual</code>.</div></div>
+        <div class="path-arrow">↓</div>
+        <div class="path-step"><div class="path-dot path-dot-b">4</div><div class="path-text">Child task appears in assignee's queue. <strong>Parent task stays in_progress</strong> until child is done AND workflow completes.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+
+<!-- ── 6. AUTOMATED TASK COMPLETION ── -->
+<div class="section">
+  <div class="sec-label">06</div>
+  <div class="sec-title">Automated Task Completion Logic</div>
+  <div class="sec-sub">Automated tasks are done only when both conditions are met. This is the key invariant.</div>
+
+  <div class="diagram">
+    <div class="completion-wrap">
+      <div class="completion-diagram">
+        <div class="comp-outer">
+          <div class="comp-label">Automated Task</div>
+          <div class="comp-name">🏷️ &nbsp;Categorize Transactions &nbsp;<span style="font-size:11px;background:#dbeafe;color:#1d4ed8;padding:2px 7px;border-radius:9999px;font-weight:600">in_progress</span></div>
+          <div class="comp-inner">
+            <div class="comp-inner-label">WorkflowExecution (internal)</div>
+            <div class="comp-node"><div class="comp-node-icon comp-node-done">✓</div>parse_pdf — done</div>
+            <div class="comp-node"><div class="comp-node-icon comp-node-done">✓</div>infer_intent — done</div>
+            <div class="comp-node"><div class="comp-node-icon comp-node-done">✓</div>apply_static_rules — done</div>
+            <div class="comp-node"><div class="comp-node-icon comp-node-emit">↗</div>cluster_review — emits child task ↓</div>
+          </div>
+          <div class="comp-child">
+            <div class="comp-child-label">⚠️ &nbsp;Child Task (workflow-emitted)</div>
+            <div class="comp-child-name">Review 12 flagged transactions</div>
+            <div class="comp-child-sub">Assigned to: CPA · parent_task → Categorize Transactions</div>
+          </div>
+        </div>
+      </div>
+      <div class="comp-rule">
+        <div class="comp-rule-title">Completion Condition</div>
+        <div class="comp-rule-item"><span class="comp-tick">✓</span>WorkflowExecution status = completed</div>
+        <div class="comp-and">AND</div>
+        <div class="comp-rule-item"><span class="comp-tick">✓</span>All child tasks (parent_task = this task) are done</div>
+        <div style="height:12px"></div>
+        <div class="comp-rule-title">Then</div>
+        <div class="comp-rule-item"><span class="comp-tick">→</span>Automated task marked <strong>done</strong></div>
+        <div class="comp-rule-item"><span class="comp-tick">→</span>Orchestrator checks depends_on of sibling tasks</div>
+        <div class="comp-rule-item"><span class="comp-tick">→</span>Next ready task(s) unlocked</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+
+<!-- ── 7. TEMPLATE CHAINS ── -->
+<div class="section">
+  <div class="sec-label">07</div>
+  <div class="sec-title">Template Definitions</div>
+  <div class="sec-sub">Pre-defined task sequences. Seeded from code. Linear DAG for v1 — structure supports branching without model changes.</div>
+
+  <div class="diagram" style="margin-bottom:12px">
+    <div style="font-size:12px;font-weight:700;color:var(--s700);margin-bottom:14px">Tax Prep</div>
+    <div class="pipeline">
+      <div class="pipe-step manual">
+        <div class="pipe-icon">📁</div>
+        <div class="pipe-name">Gather Documents</div>
+        <div class="pipe-role">CPA</div>
+        <div class="pipe-badge manual">manual</div>
+      </div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-step auto">
+        <div class="pipe-icon">⚡</div>
+        <div class="pipe-name">Import Bank Data</div>
+        <div class="pipe-role">System</div>
+        <div class="pipe-badge auto">auto</div>
+      </div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-step manual">
+        <div class="pipe-icon">🔍</div>
+        <div class="pipe-name">Reconcile Accounts</div>
+        <div class="pipe-role">Operator</div>
+        <div class="pipe-badge manual">manual</div>
+      </div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-step auto">
+        <div class="pipe-icon">🧮</div>
+        <div class="pipe-name">Compute Return</div>
+        <div class="pipe-role">System</div>
+        <div class="pipe-badge auto">auto</div>
+      </div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-step manual milestone">
+        <div class="pipe-icon">✍️</div>
+        <div class="pipe-name">CPA Review</div>
+        <div class="pipe-role">CPA</div>
+        <div class="pipe-badge milestone">milestone</div>
+      </div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-step manual">
+        <div class="pipe-icon">🤝</div>
+        <div class="pipe-name">Client Approval</div>
+        <div class="pipe-role">Client</div>
+        <div class="pipe-badge manual">manual</div>
+      </div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-step auto milestone">
+        <div class="pipe-icon">📤</div>
+        <div class="pipe-name">File Return</div>
+        <div class="pipe-role">System</div>
+        <div class="pipe-badge milestone">milestone</div>
+      </div>
+    </div>
+    <div class="pipe-legend">
+      <div class="pipe-leg-item"><div class="pipe-leg-dot" style="background:var(--i100);border:1px solid var(--i200)"></div>Automated — triggers workflow</div>
+      <div class="pipe-leg-item"><div class="pipe-leg-dot" style="background:var(--a100);border:1px solid var(--a100)"></div>Manual — human action required</div>
+      <div class="pipe-leg-item"><div class="pipe-leg-dot" style="background:white;border:2px solid var(--g500)"></div>Milestone — key project gate</div>
+    </div>
+  </div>
+
+  <div class="diagram">
+    <div style="font-size:12px;font-weight:700;color:var(--s700);margin-bottom:14px">Book Close</div>
+    <div class="pipeline">
+      <div class="pipe-step manual">
+        <div class="pipe-icon">📋</div>
+        <div class="pipe-name">Gather Statements</div>
+        <div class="pipe-role">Operator</div>
+        <div class="pipe-badge manual">manual</div>
+      </div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-step auto">
+        <div class="pipe-icon">⚡</div>
+        <div class="pipe-name">Categorize Transactions</div>
+        <div class="pipe-role">System</div>
+        <div class="pipe-badge auto">auto</div>
+      </div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-step manual milestone">
+        <div class="pipe-icon">✍️</div>
+        <div class="pipe-name">CPA Review</div>
+        <div class="pipe-role">CPA</div>
+        <div class="pipe-badge milestone">milestone</div>
+      </div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-step auto milestone">
+        <div class="pipe-icon">🔒</div>
+        <div class="pipe-name">Close Period</div>
+        <div class="pipe-role">System</div>
+        <div class="pipe-badge milestone">milestone</div>
+      </div>
+    </div>
+    <div class="pipe-legend">
+      <div class="pipe-leg-item"><div class="pipe-leg-dot" style="background:var(--i100);border:1px solid var(--i200)"></div>Automated</div>
+      <div class="pipe-leg-item"><div class="pipe-leg-dot" style="background:var(--a100);border:1px solid var(--a100)"></div>Manual</div>
+      <div class="pipe-leg-item"><div class="pipe-leg-dot" style="background:white;border:2px solid var(--g500)"></div>Milestone</div>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+
+<!-- ── 8. PROJECT LIFECYCLE ── -->
+<div class="section">
+  <div class="sec-label">08</div>
+  <div class="sec-title">Project Lifecycle</div>
+  <div class="sec-sub">State transitions and what drives them.</div>
+
+  <div class="diagram">
+    <div class="states">
+      <div class="state">
+        <div class="state-bubble state-ns"><div class="state-icon">⬜</div><div class="state-name">NOT STARTED</div></div>
+        <div class="state-label">Project created, no tasks started yet</div>
+      </div>
+      <div>
+        <div class="state-arrow">→</div>
+        <div class="state-trans">First task triggered</div>
+      </div>
+      <div class="state">
+        <div class="state-bubble state-ip"><div class="state-icon">🔵</div><div class="state-name">IN PROGRESS</div></div>
+        <div class="state-label">At least one task active</div>
+      </div>
+      <div>
+        <div class="state-arrow">→</div>
+        <div class="state-trans">Task blocked or missing data</div>
+      </div>
+      <div class="state">
+        <div class="state-bubble state-bl"><div class="state-icon">🔴</div><div class="state-name">BLOCKED</div></div>
+        <div class="state-label">A task can't proceed</div>
+      </div>
+      <div>
+        <div class="state-arrow">→</div>
+        <div class="state-trans">Block resolved</div>
+      </div>
+      <div class="state">
+        <div class="state-bubble state-nr"><div class="state-icon">🟡</div><div class="state-name">NEEDS REVIEW</div></div>
+        <div class="state-label">Milestone task waiting on CPA</div>
+      </div>
+      <div>
+        <div class="state-arrow">→</div>
+        <div class="state-trans">All tasks done</div>
+      </div>
+      <div class="state">
+        <div class="state-bubble state-co"><div class="state-icon">✅</div><div class="state-name">COMPLETED</div></div>
+        <div class="state-label">All tasks done, period closed</div>
+      </div>
+    </div>
+
+    <div style="margin-top:24px;padding:14px 18px;background:var(--s50);border-radius:8px;font-size:12px;color:var(--s500)">
+      ⤷ &nbsp;<strong style="color:var(--s700)">On Hold</strong> and <strong style="color:var(--s700)">Cancelled</strong> can be entered from any state via manual CPA action. Cancelled projects are soft-deleted; their task history is preserved.
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+
+<!-- ── 9. DASHBOARD INTEGRATION ── -->
+<div class="section">
+  <div class="sec-label">09</div>
+  <div class="sec-title">Dashboard Integration</div>
+  <div class="sec-sub">No new screen for tasks. Manual tasks surface in the existing dashboard as a "My Queue" section. Project detail is the home for all task context.</div>
+
+  <div class="two-col">
+    <div class="diagram">
+      <div style="font-size:12px;font-weight:700;color:var(--s700);margin-bottom:14px">My Queue — Dashboard Widget</div>
+      <!-- mock task queue -->
+      <div style="background:var(--r50);border-left:3px solid var(--r600);border-radius:0 8px 8px 0;padding:10px 12px;margin-bottom:8px">
+        <div style="font-size:10px;font-weight:700;color:var(--r600);margin-bottom:4px">OVERDUE</div>
+        <div style="font-size:12px;font-weight:600;color:var(--s800)">CPA Review</div>
+        <div style="font-size:11px;color:var(--s400)">Mesa Verde Tax Prep FY2024 · due Apr 15</div>
+      </div>
+      <div style="background:var(--a50);border-left:3px solid var(--a500);border-radius:0 8px 8px 0;padding:10px 12px;margin-bottom:8px">
+        <div style="font-size:10px;font-weight:700;color:var(--a700);margin-bottom:4px">DUE TODAY</div>
+        <div style="font-size:12px;font-weight:600;color:var(--s800)">Gather Documents</div>
+        <div style="font-size:11px;color:var(--s400)">Sarah Chen Photography · Book Close Q1</div>
+      </div>
+      <div style="background:white;border:1px solid var(--s200);border-radius:8px;padding:10px 12px;margin-bottom:8px">
+        <div style="font-size:10px;font-weight:700;color:var(--s400);margin-bottom:4px">THIS WEEK</div>
+        <div style="font-size:12px;font-weight:600;color:var(--s800)">Review 12 flagged transactions</div>
+        <div style="font-size:11px;color:var(--s400)">Bloom eCommerce · Tax Prep FY2024 · workflow-emitted</div>
+      </div>
+      <div style="font-size:11px;color:var(--s400);text-align:center;margin-top:4px">+ 4 more · This week</div>
+    </div>
+
+    <div class="diagram">
+      <div style="font-size:12px;font-weight:700;color:var(--s700);margin-bottom:14px">Project Detail — Task List</div>
+      <!-- mock project task list -->
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <div style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--g50);border-radius:8px;border:1px solid var(--g100)">
+          <div style="font-size:14px">✅</div>
+          <div style="flex:1;font-size:12px;color:var(--s500);text-decoration:line-through">Gather Documents</div>
+          <div style="font-size:10px;font-weight:600;background:var(--g100);color:var(--g700);padding:1px 6px;border-radius:9999px">done</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--i50);border-radius:8px;border:1px solid var(--i100)">
+          <div style="font-size:14px">⚡</div>
+          <div style="flex:1;font-size:12px;font-weight:600;color:var(--s800)">Import Bank Data</div>
+          <div style="font-size:10px;font-weight:600;background:var(--b100);color:var(--b700);padding:1px 6px;border-radius:9999px">running</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--a50);border-radius:8px;border:1px solid var(--a100);margin-left:16px">
+          <div style="font-size:14px">👤</div>
+          <div style="flex:1;font-size:12px;color:var(--s700)">↳ Review 12 flagged items</div>
+          <div style="font-size:10px;font-weight:600;background:var(--a100);color:var(--a700);padding:1px 6px;border-radius:9999px">pending</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--s50);border-radius:8px;border:1px solid var(--s200);opacity:.5">
+          <div style="font-size:14px">🔒</div>
+          <div style="flex:1;font-size:12px;color:var(--s500)">Reconcile Accounts</div>
+          <div style="font-size:10px;font-weight:600;background:var(--s100);color:var(--s400);padding:1px 6px;border-radius:9999px">waiting</div>
+        </div>
+      </div>
+      <div style="font-size:11px;color:var(--s400);margin-top:10px">Indented tasks are workflow-emitted children. Waiting tasks are locked by depends_on.</div>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+
+<!-- ── 10. BUILD PHASES ── -->
+<div class="section">
+  <div class="sec-label">10</div>
+  <div class="sec-title">Build Phases</div>
+  <div class="sec-sub">Four phases, independent of each other after Phase 1. Phases 3 and 4 can run in parallel.</div>
+
+  <div class="phases">
+    <div class="phase-card ph1">
+      <div class="phase-head">Phase 1 · Data Model</div>
+      <div class="phase-body">
+        <div class="phase-item">ProjectTemplate model</div>
+        <div class="phase-item">TaskDefinition model</div>
+        <div class="phase-item">Task: add task_type, template_key, depends_on, workflow_key, workflow_config, parent_task, workflow_execution FK</div>
+        <div class="phase-item">Project: add template FK, period_start/end, metadata, started_at</div>
+        <div class="phase-item">Migrations</div>
+        <div class="phase-item">seed_project_templates command</div>
+      </div>
+    </div>
+    <div class="phase-card ph2">
+      <div class="phase-head">Phase 2 · Creation</div>
+      <div class="phase-body">
+        <div class="phase-item">ProjectFactory.from_template() service</div>
+        <div class="phase-item">POST /projects/from-template/ API</div>
+        <div class="phase-item">Auto-start ready tasks on creation</div>
+        <div class="phase-item">WorkflowTrigger for automated tasks</div>
+        <div class="phase-item">Assignee notification for manual tasks</div>
+      </div>
+    </div>
+    <div class="phase-card ph3">
+      <div class="phase-head">Phase 3 · Orchestration</div>
+      <div class="phase-body">
+        <div class="phase-item">TaskOrchestrationService</div>
+        <div class="phase-item">post_save signal on Task status → done</div>
+        <div class="phase-item">Dependency check + next task unlock</div>
+        <div class="phase-item">Automated task completion logic (workflow + children)</div>
+        <div class="phase-item">Project auto-complete when all tasks done</div>
+      </div>
+    </div>
+    <div class="phase-card ph4">
+      <div class="phase-head">Phase 4 · Frontend</div>
+      <div class="phase-body">
+        <div class="phase-item">Project creation modal (from template)</div>
+        <div class="phase-item">Project detail — task list with status</div>
+        <div class="phase-item">Dashboard "My Queue" widget</div>
+        <div class="phase-item">GET /tasks/my-tasks/ API</div>
+        <div class="phase-item">Mark complete CTA on manual tasks</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+
+<!-- ── 11. OPEN DECISIONS ── -->
+<div class="section">
+  <div class="sec-label">11</div>
+  <div class="sec-title">Open Decisions — For Review</div>
+  <div class="sec-sub">Items that need a call before implementation starts.</div>
+
+  <div class="diagram" style="padding:0;overflow:hidden">
+    <table class="decisions">
+      <thead>
+        <tr>
+          <th style="width:200px">Decision</th>
+          <th>Options</th>
+          <th style="width:90px">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Template storage</strong><br/><span style="font-size:11px;color:var(--s400)">Where do template definitions live?</span></td>
+          <td><strong>A)</strong> Code + seed command (simpler, version-controlled, not user-editable) &nbsp;·&nbsp; <strong>B)</strong> Fully DB-backed (firms can customize templates, more complex). Recommend A for v1, migrate to B later.</td>
+          <td><span class="dec-open">Open</span></td>
+        </tr>
+        <tr>
+          <td><strong>DAG complexity</strong><br/><span style="font-size:11px;color:var(--s400)">How far does depends_on go in v1?</span></td>
+          <td>V1 is linear (each task depends on previous). The <code>depends_on</code> JSON array already supports parallel branches — upgrading is a workflow engine change, not a model change. No action needed now.</td>
+          <td><span class="dec-decided">Decided</span></td>
+        </tr>
+        <tr>
+          <td><strong>Client tasks</strong><br/><span style="font-size:11px;color:var(--s400)">assignee_role = client — how does client receive and complete tasks?</span></td>
+          <td><strong>A)</strong> Email link → simple web form to mark complete &nbsp;·&nbsp; <strong>B)</strong> Client portal (future). For v1, recommend email link with a token-authenticated approval endpoint.</td>
+          <td><span class="dec-open">Open</span></td>
+        </tr>
+        <tr>
+          <td><strong>Automated task for future workflows</strong><br/><span style="font-size:11px;color:var(--s400)">"Compute Return" and "File Return" don't have workflows yet.</span></td>
+          <td>Template tasks with <code>workflow_key = null</code> behave as manual tasks as a fallback. CPA manually marks them done until the workflow exists. No blocking dependency.</td>
+          <td><span class="dec-decided">Decided</span></td>
+        </tr>
+        <tr>
+          <td><strong>Parallel task unlock</strong><br/><span style="font-size:11px;color:var(--s400)">Can multiple tasks start at the same time?</span></td>
+          <td>Yes — any task whose full depends_on set is satisfied unlocks simultaneously. Orchestrator loops all candidates after each task completion. No model change required.</td>
+          <td><span class="dec-decided">Decided</span></td>
+        </tr>
+        <tr>
+          <td><strong>Project visibility</strong><br/><span style="font-size:11px;color:var(--s400)">Can all team members see all projects?</span></td>
+          <td>Today: team-scoped (all members see all projects). Future: per-project ACL. Out of scope for v1 — use existing TeamContextModelMixin.</td>
+          <td><span class="dec-decided">Decided</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+</div><!-- end page -->
+</body>
+</html>
